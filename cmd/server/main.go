@@ -12,7 +12,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"net/http"
-	"net/url"
 	"os"
 	"time"
 )
@@ -35,8 +34,8 @@ func main() {
 		os.Exit(-1)
 	}
 	// connect to the mongo database
-	escapedPassword := url.QueryEscape(cfg.DbPassword)
-	connStr := fmt.Sprintf(cfg.DbConnectionString, escapedPassword)
+	//escapedPassword := url.QueryEscape(cfg.DbPassword)
+	connStr := cfg.DbConnectionString // fmt.Sprintf(cfg.DbConnectionString, escapedPassword)
 	db, err := SetupMongoDB(connStr, cfg.DbName)
 
 	if err != nil {
@@ -63,6 +62,7 @@ func main() {
 }
 
 func SetupMongoDB(connStr, dbName string) (*mongo.Database, error) {
+	fmt.Println("attempting to connect to the db.." + dbName + connStr)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -87,13 +87,13 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	r.HandleFunc("/api/healthcheck", HealthCheckHandler).Methods("GET")
 
 	post.RegisterHandlers(r,
-		businessCategory.NewService(businessCategory.NewRepository(db, logger), logger),
+		post.NewService(post.NewRepository(db, logger), logger),
 		logger,
 		cfg.JWTSigningKey)
 
-	auth.RegisterHandlers(r,
-		auth.NewService(cfg.JWTSigningKey, cfg.JWTExpiration, logger, user.NewRepository(db, logger)),
-		logger)
+	//auth.RegisterHandlers(r,
+	//	auth.NewService(cfg.JWTSigningKey, cfg.JWTExpiration, logger, user.NewRepository(db, logger)),
+	//	logger)
 
 	return r
 }
