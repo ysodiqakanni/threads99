@@ -6,12 +6,14 @@ import (
 	"github.com/ysodiqakanni/threads99/internal/entity"
 	"github.com/ysodiqakanni/threads99/pkg/dbcontext"
 	"github.com/ysodiqakanni/threads99/pkg/log"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type Repository interface {
 	Create(ctx context.Context, community entity.Community) (*primitive.ObjectID, error)
+	Get(ctx context.Context, id primitive.ObjectID) (entity.Community, error)
 }
 
 // repository persists data in database
@@ -35,4 +37,13 @@ func (r repository) Create(ctx context.Context, community entity.Community) (*pr
 	fmt.Printf("inserted document with ID %v\n", result.InsertedID)
 	id := result.InsertedID.(primitive.ObjectID)
 	return &id, err
+}
+
+func (r repository) Get(ctx context.Context, id primitive.ObjectID) (entity.Community, error) {
+	fmt.Println("Getting community by Id")
+	filter := bson.M{"_id": id}
+	var comminity entity.Community
+	err := r.collection.FindOne(ctx, filter).Decode(&comminity)
+
+	return comminity, err
 }

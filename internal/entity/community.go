@@ -8,7 +8,7 @@ import (
 type Community struct {
 	ID          primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
 	Name        string             `json:"name" bson:"name" validate:"required"`
-	Description string             `json:"name" bson:"name"`
+	Description string             `json:"description" bson:"description"`
 	//CreatedByUserId
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
