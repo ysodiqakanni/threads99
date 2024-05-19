@@ -13,7 +13,7 @@ type Community struct {
 	MembersCount int                `bson:"members_count"`
 	// MembershipType: is it public, restricted, byInvite, etc
 
-	CreatedByUserId primitive.ObjectID `bson:"created_by_user_id" bson:"created_by_user_id"`
+	CreatedByUserId primitive.ObjectID `bson:"created_by_user_id" bson:"created_by_user_id" validate:"required"`
 	CreatedAt       time.Time          `json:"created_at"`
 	UpdatedAt       time.Time          `json:"updated_at"`
 	IsDeleted       bool               `json:"is_deleted"`

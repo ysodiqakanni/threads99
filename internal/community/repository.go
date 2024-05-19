@@ -47,3 +47,5 @@ func (r repository) Get(ctx context.Context, id primitive.ObjectID) (entity.Comm
 
 	return comminity, err
 }
+
+// implement getCommunityByName

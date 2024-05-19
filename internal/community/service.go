@@ -31,31 +31,31 @@ func NewService(repo Repository, logger log.Logger) Service {
 type CreateCommunityRequest struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
+
+	AvatarUrl       string `bson:"avatar_url" bson:"avatar_url"`
+	CreatedByUserId string `bson:"created_by_user_id" bson:"created_by_user_id" validate:"required"`
 }
 
 func (m CreateCommunityRequest) Validate() error {
 	return validation.ValidateStruct(&m,
 		validation.Field(&m.Name, validation.Required, validation.Length(0, 128), validation.Match(regexp.MustCompile("^[a-zA-Z0-9].*$"))),
+		validation.Field(&m.CreatedByUserId, validation.Required),
 	)
 }
 
 func (s service) Create(ctx context.Context, req CreateCommunityRequest) (Community, error) {
-	//if err := req.Validate(); err != nil {
-	//	return Community{}, err
-	//}
-
-	//existing, _ := s.GetByName(ctx, req.Name)
-	////emptyObj := BusinessCategory{}
-	//if existing != nil /*!= emptyObj*/ {
-	//	return BusinessCategory{}, errors.New("A business_ category with this name already exists")
-	//}
-
 	now := time.Now()
+	userId, err := primitive.ObjectIDFromHex(req.CreatedByUserId)
+	if err != nil {
+		// invalid userId
+		return Community{}, err
+	}
 	id, err := s.repo.Create(ctx, entity.Community{
-		Name:        req.Name,
-		Description: req.Description,
-		CreatedAt:   now,
-		UpdatedAt:   now,
+		Name:            req.Name,
+		Description:     req.Description,
+		CreatedByUserId: userId,
+		CreatedAt:       now,
+		UpdatedAt:       now,
 	})
 	if err != nil {
 		return Community{}, err

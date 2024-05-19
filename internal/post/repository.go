@@ -22,7 +22,7 @@ type repository struct {
 }
 
 func NewRepository(db *dbcontext.DB, logger log.Logger) Repository {
-	col := db.DB().Collection("business_categories")
+	col := db.DB().Collection("posts")
 	logger.Infof("collection retrieved")
 	return repository{col, logger}
 }

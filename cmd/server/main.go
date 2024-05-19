@@ -81,6 +81,31 @@ func SetupMongoDB(connStr, dbName string) (*mongo.Database, error) {
 	fmt.Println("Ping successful!")
 	// mongoClient = client
 
+	/*
+		// Now create collections and set rules
+		//collection := client.Database(dbName).Collection("communities")
+		// Define validation rule
+		communitiesValidation := bson.M{
+			"$jsonSchema": bson.M{
+				"bsonType": "object",
+				"required": []string{"created_by_user_id"},
+				"properties": bson.M{
+					"email": bson.M{
+						"bsonType":    "string",
+						"description": "must be a ObjectId and is required",
+					},
+					// Add other properties as needed
+				},
+			},
+		}
+
+		// Create collection with validation
+		opts := options.CreateCollection().SetValidator(communitiesValidation)
+		if err := client.Database(dbName).CreateCollection(context.Background(), "communities", opts); err != nil {
+			fmt.Println("Validation rule setup failed!")
+			return nil, err
+		}*/
+
 	return client.Database(dbName), nil
 }
 
