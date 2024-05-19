@@ -43,3 +43,35 @@ func (r resource) getAllHandler(w http.ResponseWriter, req *http.Request) {
 
 	json.NewEncoder(w).Encode(id)
 }
+func (r resource) createNewPostHandler(w http.ResponseWriter, req *http.Request) {
+	var input CreateNewPostRequest
+	err := json.NewDecoder(req.Body).Decode(&input)
+	if err != nil {
+		r.logger.With(req.Context()).Info(err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if err := input.Validate(); err != nil {
+		r.logger.With(req.Context()).Info(err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	r.service
+}
+
+func (r resource) createCommentHandler() {
+
+}
+func (r resource) upVotePostHandler() {
+
+}
+func (r resource) downVotePostHandler() {
+
+}
+func (r resource) upVoteCommentHandler() {
+
+}
+func (r resource) downVoteCommentHandler() {
+
+}

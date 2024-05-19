@@ -2,6 +2,7 @@ package community
 
 import (
 	"context"
+	"errors"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/ysodiqakanni/threads99/internal/entity"
 	"github.com/ysodiqakanni/threads99/pkg/log"
@@ -49,6 +50,18 @@ func (s service) Create(ctx context.Context, req CreateCommunityRequest) (Commun
 	if err != nil {
 		// invalid userId
 		return Community{}, err
+	}
+	// check if the community already exists
+	existingCommunity, err := s.repo.GetByName(ctx, req.Name)
+	if err != nil {
+		// db error
+		// Todo: log it
+		s.logger.Error(err)
+		return Community{}, err
+	}
+	if existingCommunity.Name != "" {
+		// already exists
+		return Community{}, errors.New("A community with this name already exists.")
 	}
 	id, err := s.repo.Create(ctx, entity.Community{
 		Name:            req.Name,

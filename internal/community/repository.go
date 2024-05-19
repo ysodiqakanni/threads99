@@ -14,6 +14,7 @@ import (
 type Repository interface {
 	Create(ctx context.Context, community entity.Community) (*primitive.ObjectID, error)
 	Get(ctx context.Context, id primitive.ObjectID) (entity.Community, error)
+	GetByName(ctx context.Context, name string) (entity.Community, error)
 }
 
 // repository persists data in database
@@ -49,3 +50,14 @@ func (r repository) Get(ctx context.Context, id primitive.ObjectID) (entity.Comm
 }
 
 // implement getCommunityByName
+func (r repository) GetByName(ctx context.Context, name string) (entity.Community, error) {
+	fmt.Println("Getting community by name")
+	filter := bson.M{"name": bson.M{"$regex": primitive.Regex{Pattern: "^" + name + "$", Options: "i"}}}
+	var community entity.Community
+	err := r.collection.FindOne(ctx, filter).Decode(&community)
+	if err == mongo.ErrNoDocuments {
+		return entity.Community{}, nil
+	}
+
+	return community, err
+}

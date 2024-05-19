@@ -13,6 +13,7 @@ import (
 
 type Repository interface {
 	Get(ctx context.Context, id primitive.ObjectID) (entity.Post, error)
+	Create(ctx context.Context, postRequest entity.Post) (*primitive.ObjectID, error)
 }
 
 // repository persists data in database
@@ -38,4 +39,13 @@ func (r repository) Get(ctx context.Context, id primitive.ObjectID) (entity.Post
 	err := r.collection.FindOne(ctx, filter).Decode(&post)
 
 	return post, err
+}
+
+func (r repository) Create(ctx context.Context, postRequest entity.Post) (*primitive.ObjectID, error) {
+	result, err := r.collection.InsertOne(ctx, postRequest)
+	if err != nil {
+		return nil, err
+	}
+	id := result.InsertedID.(primitive.ObjectID)
+	return &id, err
 }

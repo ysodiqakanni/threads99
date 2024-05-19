@@ -6,6 +6,7 @@ import (
 	"github.com/ysodiqakanni/threads99/internal/entity"
 	"github.com/ysodiqakanni/threads99/pkg/log"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"golang.org/x/crypto/bcrypt"
 	"time"
 )
 
@@ -69,14 +70,20 @@ func (s service) Create(ctx context.Context, req CreateUserRequest) (*User, erro
 
 	//password :=
 	// Todo: generate user password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), 12)
+	if err != nil {
+		return nil, err
+	}
+
 	now := time.Now()
 	id, err := s.repo.Create(ctx, entity.User{
-		FirstName: req.FirstName,
-		LastName:  req.LastName,
-		Email:     req.Email,
-		Role:      req.Roles,
-		CreatedAt: now,
-		UpdatedAt: now,
+		FirstName:      req.FirstName,
+		LastName:       req.LastName,
+		HashedPassword: hashedPassword,
+		Email:          req.Email,
+		Role:           req.Roles,
+		CreatedAt:      now,
+		UpdatedAt:      now,
 	})
 	if err != nil {
 		return nil, err
