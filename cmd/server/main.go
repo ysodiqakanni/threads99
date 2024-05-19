@@ -8,6 +8,7 @@ import (
 	"github.com/ysodiqakanni/threads99/internal/community"
 	"github.com/ysodiqakanni/threads99/internal/config"
 	"github.com/ysodiqakanni/threads99/internal/post"
+	"github.com/ysodiqakanni/threads99/internal/user"
 	"github.com/ysodiqakanni/threads99/pkg/dbcontext"
 	"github.com/ysodiqakanni/threads99/pkg/log"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -96,6 +97,10 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 		community.NewService(community.NewRepository(db, logger), logger),
 		logger,
 		cfg.JWTSigningKey)
+
+	user.RegisterHandlers(r,
+		user.NewService(user.NewRepository(db, logger), logger),
+		logger)
 
 	//auth.RegisterHandlers(r,
 	//	auth.NewService(cfg.JWTSigningKey, cfg.JWTExpiration, logger, user.NewRepository(db, logger)),
