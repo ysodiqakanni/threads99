@@ -119,6 +119,7 @@ func (s service) AddCommentToPost(ctx context.Context, commentRequest AddComment
 		return err
 	}
 	comment := entity.Comment{
+		ID:              primitive.NewObjectID(),
 		Content:         commentRequest.CommentContent,
 		CreatedByUserId: commentUserId,
 		CreatedAt:       time.Now(),
