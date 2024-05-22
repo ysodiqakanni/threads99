@@ -23,6 +23,7 @@ type Comment struct {
 
 type Post struct {
 	ID      primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	Title   string             `bson:"title,omitempty" validate:"required"`
 	Content string             `json:"name,omitempty" bson:"name,omitempty" validate:"required"`
 
 	CreatedByUserId primitive.ObjectID `bson:"created_by_user_id" bson:"created_by_user_id"`
@@ -31,4 +32,5 @@ type Post struct {
 	IsDeleted       bool               `json:"is_deleted"`
 	Votes           Votes              `bson:"votes"`
 	Comments        []Comment          `bson:"comments"`
+	Community       Community          `bson:"community"`
 }

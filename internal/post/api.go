@@ -13,7 +13,7 @@ func RegisterHandlers(r *mux.Router, service Service, logger log.Logger, secret 
 	//r.HandleFunc("/api/v1/categories/{id}", res.getByIdHandler).Methods("GET")
 	//r.HandleFunc("/api/v1/posts", res.getAllHandler).Methods("GET")
 	r.HandleFunc("/api/v1/posts", res.getByIdHandler).Methods("GET")
-
+	r.HandleFunc("/api/v1/posts", res.createNewPostHandler).Methods("POST")
 	// Protected Endpoints
 	//r.Handle("/api/v1/categories", auth.AuthenticateMiddleware(auth.RoleMiddleware(http.HandlerFunc(res.create), "admin"), secret)).Methods("POST")
 	r.Use()
@@ -57,7 +57,12 @@ func (r resource) createNewPostHandler(w http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	r.service
+	r.service.CreatePost(req.Context(), input)
+	if err != nil {
+		r.logger.With(req.Context()).Info(err)
+		http.Error(w, "Error creating new post "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (r resource) createCommentHandler() {

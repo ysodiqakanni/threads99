@@ -114,7 +114,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	r.HandleFunc("/api/healthcheck", HealthCheckHandler).Methods("GET")
 
 	post.RegisterHandlers(r,
-		post.NewService(post.NewRepository(db, logger), logger),
+		post.NewService(post.NewRepository(db, logger), community.NewRepository(db, logger), logger),
 		logger,
 		cfg.JWTSigningKey)
 
