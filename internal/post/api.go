@@ -14,6 +14,8 @@ func RegisterHandlers(r *mux.Router, service Service, logger log.Logger, secret 
 	//r.HandleFunc("/api/v1/posts", res.getAllHandler).Methods("GET")
 	r.HandleFunc("/api/v1/posts", res.getByIdHandler).Methods("GET")
 	r.HandleFunc("/api/v1/posts", res.createNewPostHandler).Methods("POST")
+	r.HandleFunc("/api/v1/posts/add-comment", res.createCommentHandler).Methods("PUT")
+	r.HandleFunc("/api/v1/posts/upvote-comment", res.upVoteCommentHandler).Methods("PUT")
 	// Protected Endpoints
 	//r.Handle("/api/v1/categories", auth.AuthenticateMiddleware(auth.RoleMiddleware(http.HandlerFunc(res.create), "admin"), secret)).Methods("POST")
 	r.Use()
@@ -65,8 +67,26 @@ func (r resource) createNewPostHandler(w http.ResponseWriter, req *http.Request)
 	}
 }
 
-func (r resource) createCommentHandler() {
+func (r resource) createCommentHandler(w http.ResponseWriter, req *http.Request) {
+	var input AddCommentToPostRequest
+	err := json.NewDecoder(req.Body).Decode(&input)
+	if err != nil {
+		r.logger.With(req.Context()).Info(err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if err := input.Validate(); err != nil {
+		r.logger.With(req.Context()).Info(err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
+	err = r.service.AddCommentToPost(req.Context(), input)
+	if err != nil {
+		r.logger.With(req.Context()).Info(err)
+		http.Error(w, "Error creating new comment "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 func (r resource) upVotePostHandler() {
 
@@ -74,8 +94,23 @@ func (r resource) upVotePostHandler() {
 func (r resource) downVotePostHandler() {
 
 }
-func (r resource) upVoteCommentHandler() {
+func (r resource) upVoteCommentHandler(w http.ResponseWriter, req *http.Request) {
+	var input CommentUpvoteRequest
+	err := json.NewDecoder(req.Body).Decode(&input)
+	if err != nil {
+		r.logger.With(req.Context()).Info(err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
+	err = input.Validate()
+	if err != nil {
+		r.logger.With(req.Context()).Info(err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = r.service.UpvoteComment(req.Context(), input)
 }
 func (r resource) downVoteCommentHandler() {
 
