@@ -15,11 +15,17 @@ type Post struct {
 	entity.Post
 }
 
+type CommentModel struct {
+	entity.Comment
+}
+
 type Service interface {
 	Get(ctx context.Context, id primitive.ObjectID) (Post, error)
 	CreatePost(ctx context.Context, request CreateNewPostRequest) error
 	AddCommentToPost(ctx context.Context, commentRequest AddCommentToPostRequest) error
 	UpvoteComment(ctx context.Context, request CommentUpvoteRequest) error
+	UpvotePost(ctx context.Context, request PostUpvoteRequest) error
+	GetCommentsByPostId(ctx context.Context, postIdStr string) ([]entity.Comment, error)
 }
 
 type service struct {
@@ -46,9 +52,15 @@ type AddCommentToPostRequest struct {
 	CommentContent  string `json:"comment_content"`
 }
 
+type PostUpvoteRequest struct {
+	PostId    string `json:"post_id"`
+	VoteValue int    `json:"vote_value"`
+}
+
 type CommentUpvoteRequest struct {
 	PostId    string `json:"post_id"`
 	CommentId string `json:"comment_id"`
+	VoteValue int    `json:"vote_value"`
 }
 
 func (m CreateNewPostRequest) Validate() error {
@@ -70,6 +82,14 @@ func (m CommentUpvoteRequest) Validate() error {
 	return validation.ValidateStruct(&m,
 		validation.Field(&m.CommentId, validation.Required),
 		validation.Field(&m.PostId, validation.Required),
+		validation.Field(&m.VoteValue, validation.Required),
+	)
+}
+
+func (m PostUpvoteRequest) Validate() error {
+	return validation.ValidateStruct(&m,
+		validation.Field(&m.PostId, validation.Required),
+		validation.Field(&m.VoteValue, validation.Required),
 	)
 }
 
@@ -143,6 +163,26 @@ func (s service) UpvoteComment(ctx context.Context, request CommentUpvoteRequest
 	if err != nil {
 		return err
 	}
-	err = s.repo.UpvoteComment(ctx, commentId, postId)
+	err = s.repo.UpvoteComment(ctx, commentId, postId, request.VoteValue)
 	return err
+}
+
+func (s service) UpvotePost(ctx context.Context, request PostUpvoteRequest) error {
+	postId, err := primitive.ObjectIDFromHex(request.PostId)
+	if err != nil {
+		return err
+	}
+	err = s.repo.UpvotePost(ctx, postId, request.VoteValue)
+	return err
+}
+
+func (s service) GetCommentsByPostId(ctx context.Context, postIdStr string) ([]entity.Comment, error) {
+	postId, err := primitive.ObjectIDFromHex(postIdStr)
+	emptyComments := []entity.Comment{}
+	if err != nil {
+		return emptyComments, err
+	}
+	results, err := s.repo.GetCommentsByPostId(ctx, postId)
+
+	return results, err
 }

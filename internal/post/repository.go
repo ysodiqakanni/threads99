@@ -2,6 +2,7 @@ package post
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/ysodiqakanni/threads99/internal/entity"
 	"github.com/ysodiqakanni/threads99/pkg/dbcontext"
@@ -16,7 +17,9 @@ type Repository interface {
 	Get(ctx context.Context, id primitive.ObjectID) (entity.Post, error)
 	Create(ctx context.Context, postRequest entity.Post) (*primitive.ObjectID, error)
 	AddCommentToPost(ctx context.Context, postId primitive.ObjectID, comment entity.Comment) error
-	UpvoteComment(ctx context.Context, commentId primitive.ObjectID, postId primitive.ObjectID) error
+	UpvoteComment(ctx context.Context, commentId primitive.ObjectID, postId primitive.ObjectID, voteValue int) error
+	UpvotePost(ctx context.Context, postId primitive.ObjectID, voteValue int) error
+	GetCommentsByPostId(ctx context.Context, postId primitive.ObjectID) ([]entity.Comment, error)
 }
 
 // repository persists data in database
@@ -78,16 +81,69 @@ func (r repository) AddCommentToPost(ctx context.Context, postId primitive.Objec
 	return err
 }
 
-func (r repository) UpvoteComment(ctx context.Context, commentId primitive.ObjectID, postId primitive.ObjectID) error {
+func (r repository) UpvoteComment(ctx context.Context, commentId primitive.ObjectID, postId primitive.ObjectID, voteValue int) error {
 
 	filter := bson.M{
 		"_id":          postId,
 		"comments._id": commentId,
 	}
 	update := bson.M{
-		"$inc": bson.M{"comments.$.votes.up": 1},
+		"$inc": bson.M{"comments.$.votes.up": voteValue},
 	}
 	_, err := r.collection.UpdateOne(ctx, filter, update)
 
 	return err
+}
+
+func (r repository) UpvotePost(ctx context.Context, postId primitive.ObjectID, voteValue int) error {
+
+	filter := bson.M{
+		"_id": postId,
+	}
+	update := bson.M{
+		"$inc": bson.M{"votes.up": voteValue},
+	}
+	_, err := r.collection.UpdateOne(ctx, filter, update)
+
+	return err
+}
+
+func (r repository) GetCommentsByPostId(ctx context.Context, postId primitive.ObjectID) ([]entity.Comment, error) {
+	filter := bson.M{
+		"_id": postId,
+	}
+	var result struct {
+		Comments []entity.Comment `bson:"comments"`
+	}
+	err := r.collection.FindOne(ctx, filter).Decode(&result)
+
+	return result.Comments, err
+
+	var post bson.M
+	err = r.collection.FindOne(ctx, filter).Decode(&post)
+
+	emptyComments := []entity.Comment{}
+	if err != nil {
+		return emptyComments, err
+	}
+	comments, ok := post["comments"].([]interface{})
+	if !ok {
+		r.logger.Errorf("comments not found or invalid")
+		return emptyComments, errors.New("An error occurred while fetching comments from doc.")
+	}
+
+	var commentsList []entity.Comment
+	for _, comment := range comments {
+		var commentDoc entity.Comment
+		bsonBytes, err := bson.Marshal(comment)
+		if err != nil {
+			continue
+		}
+		err = bson.Unmarshal(bsonBytes, &commentDoc)
+		if err != nil {
+			continue
+		}
+		commentsList = append(commentsList, commentDoc)
+	}
+	return commentsList, nil
 }

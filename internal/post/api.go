@@ -2,6 +2,7 @@ package post
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/ysodiqakanni/threads99/pkg/log"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -13,9 +14,11 @@ func RegisterHandlers(r *mux.Router, service Service, logger log.Logger, secret 
 	//r.HandleFunc("/api/v1/categories/{id}", res.getByIdHandler).Methods("GET")
 	//r.HandleFunc("/api/v1/posts", res.getAllHandler).Methods("GET")
 	r.HandleFunc("/api/v1/posts", res.getByIdHandler).Methods("GET")
+	r.HandleFunc("/api/v1/posts/{postId}/comments", res.getCommentsHandler).Methods("GET")
 	r.HandleFunc("/api/v1/posts", res.createNewPostHandler).Methods("POST")
 	r.HandleFunc("/api/v1/posts/add-comment", res.createCommentHandler).Methods("PUT")
-	r.HandleFunc("/api/v1/posts/upvote-comment", res.upVoteCommentHandler).Methods("PUT")
+	r.HandleFunc("/api/v1/posts/upvote-comment", res.voteCommentHandler).Methods("PUT")
+	r.HandleFunc("/api/v1/posts/vote", res.votePostHandler).Methods("PUT")
 	// Protected Endpoints
 	//r.Handle("/api/v1/categories", auth.AuthenticateMiddleware(auth.RoleMiddleware(http.HandlerFunc(res.create), "admin"), secret)).Methods("POST")
 	r.Use()
@@ -88,13 +91,27 @@ func (r resource) createCommentHandler(w http.ResponseWriter, req *http.Request)
 		return
 	}
 }
-func (r resource) upVotePostHandler() {
 
-}
-func (r resource) downVotePostHandler() {
+func (r resource) votePostHandler(w http.ResponseWriter, req *http.Request) {
+	var input PostUpvoteRequest
+	err := json.NewDecoder(req.Body).Decode(&input)
+	if err != nil {
+		r.logger.With(req.Context()).Info(err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
+	err = input.Validate()
+	if err != nil {
+		r.logger.With(req.Context()).Info(err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = r.service.UpvotePost(req.Context(), input)
 }
-func (r resource) upVoteCommentHandler(w http.ResponseWriter, req *http.Request) {
+
+func (r resource) voteCommentHandler(w http.ResponseWriter, req *http.Request) {
 	var input CommentUpvoteRequest
 	err := json.NewDecoder(req.Body).Decode(&input)
 	if err != nil {
@@ -112,6 +129,17 @@ func (r resource) upVoteCommentHandler(w http.ResponseWriter, req *http.Request)
 
 	err = r.service.UpvoteComment(req.Context(), input)
 }
-func (r resource) downVoteCommentHandler() {
 
+func (r resource) getCommentsHandler(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	postId := vars["postId"]
+	fmt.Println("Attempting to load comments for post: " + postId)
+	results, err := r.service.GetCommentsByPostId(req.Context(), postId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(results)
 }
