@@ -1,0 +1,8 @@
+dsn: "postgres://127.0.0.1/go_restful?sslmode=disable&user=postgres&password=postgres"
+jwt_signing_key: "LxsKJywDL5O5PvgODZhBH12KE6k2yL8E"
+#db_connection_string: "mongodb+srv://root:%s@helloworldcluster.zndnutk.mongodb.net/?retryWrites=true&w=majority"
+db_connection_string: "mongodb://localhost:27017"
+db_password:
+db_name: "threads99Db"
+password_hashing_cost: 12
+server_port: 8090
