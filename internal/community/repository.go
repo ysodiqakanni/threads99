@@ -15,6 +15,7 @@ type Repository interface {
 	Create(ctx context.Context, community entity.Community) (*primitive.ObjectID, error)
 	Get(ctx context.Context, id primitive.ObjectID) (entity.Community, error)
 	GetByName(ctx context.Context, name string) (entity.Community, error)
+	GetAllCommunities(ctx context.Context) ([]entity.Community, error)
 }
 
 // repository persists data in database
@@ -60,4 +61,22 @@ func (r repository) GetByName(ctx context.Context, name string) (entity.Communit
 	}
 
 	return community, err
+}
+
+// Todo: Should be removed! Never get ALL!!!
+func (r repository) GetAllCommunities(ctx context.Context) ([]entity.Community, error) {
+	// Find all documents in the collection
+	cursor, err := r.collection.Find(ctx, bson.M{}) // using an empty filter to get ALL
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	// Decode all documents into a slice of communities
+	var communities []entity.Community
+	if err = cursor.All(ctx, &communities); err != nil {
+		return nil, err
+	}
+
+	return communities, nil
 }

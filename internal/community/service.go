@@ -17,6 +17,7 @@ type Community struct {
 type Service interface {
 	Get(ctx context.Context, id primitive.ObjectID) (Community, error)
 	Create(ctx context.Context, req CreateCommunityRequest) (Community, error)
+	GetAllCommunities(ctx context.Context) ([]entity.Community, error)
 }
 
 type service struct {
@@ -82,4 +83,13 @@ func (s service) Get(ctx context.Context, id primitive.ObjectID) (Community, err
 		return Community{}, err
 	}
 	return Community{post}, nil
+}
+
+func (s service) GetAllCommunities(ctx context.Context) ([]entity.Community, error) {
+	communities, err := s.repo.GetAllCommunities(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return communities, nil
 }
