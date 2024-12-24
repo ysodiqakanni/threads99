@@ -26,10 +26,10 @@ type Post struct {
 	Title   string             `bson:"title,omitempty" validate:"required"`
 	Content string             `json:"name,omitempty" bson:"name,omitempty" validate:"required"`
 
-	CreatedByUserId primitive.ObjectID `bson:"created_by_user_id" bson:"created_by_user_id"`
-	CreatedAt       time.Time          `json:"created_at"`
-	UpdatedAt       time.Time          `json:"updated_at"`
-	IsDeleted       bool               `json:"is_deleted"`
+	CreatedByUserId primitive.ObjectID `json:"created_by_user_id" bson:"created_by_user_id"`
+	CreatedAt       time.Time          `json:"created_at" bson:"created_at"`
+	UpdatedAt       time.Time          `json:"updated_at" bson:"updated_at"`
+	IsDeleted       bool               `json:"is_deleted" bson:"is_deleted"`
 	Votes           Votes              `bson:"votes"`
 	Comments        []Comment          `bson:"comments"`
 	Community       Community          `bson:"community"`

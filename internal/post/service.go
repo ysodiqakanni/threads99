@@ -26,6 +26,7 @@ type Service interface {
 	UpvoteComment(ctx context.Context, request CommentUpvoteRequest) error
 	UpvotePost(ctx context.Context, request PostUpvoteRequest) error
 	GetCommentsByPostId(ctx context.Context, postIdStr string) ([]entity.Comment, error)
+	GetAllRecentPosts(ctx context.Context) ([]entity.Post, error)
 }
 
 type service struct {
@@ -133,6 +134,23 @@ func (s service) CreatePost(ctx context.Context, request CreateNewPostRequest) e
 	return err
 }
 
+func (s service) GetAllRecentPosts(ctx context.Context) ([]entity.Post, error) {
+	posts, err := s.repo.GetAllRecentPosts(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return posts, nil
+}
+func (s service) UpvotePost(ctx context.Context, request PostUpvoteRequest) error {
+	postId, err := primitive.ObjectIDFromHex(request.PostId)
+	if err != nil {
+		return err
+	}
+	err = s.repo.UpvotePost(ctx, postId, request.VoteValue)
+	return err
+}
+
 func (s service) AddCommentToPost(ctx context.Context, commentRequest AddCommentToPostRequest) error {
 	commentUserId, err := primitive.ObjectIDFromHex(commentRequest.CreatedByUserId)
 	if err != nil {
@@ -164,15 +182,6 @@ func (s service) UpvoteComment(ctx context.Context, request CommentUpvoteRequest
 		return err
 	}
 	err = s.repo.UpvoteComment(ctx, commentId, postId, request.VoteValue)
-	return err
-}
-
-func (s service) UpvotePost(ctx context.Context, request PostUpvoteRequest) error {
-	postId, err := primitive.ObjectIDFromHex(request.PostId)
-	if err != nil {
-		return err
-	}
-	err = s.repo.UpvotePost(ctx, postId, request.VoteValue)
 	return err
 }
 

@@ -15,6 +15,7 @@ func RegisterHandlers(r *mux.Router, service Service, logger log.Logger, secret 
 	//r.HandleFunc("/api/v1/categories/{id}", res.getByIdHandler).Methods("GET")
 	//r.HandleFunc("/api/v1/posts", res.getAllHandler).Methods("GET")
 	r.HandleFunc("/api/v1/posts", res.getByIdHandler).Methods("GET")
+	r.HandleFunc("/api/v1/posts/recent", res.GetAllRecentPostsHandler).Methods("GET")
 	r.HandleFunc("/api/v1/posts/{postId}/comments", res.getCommentsHandler).Methods("GET")
 	r.HandleFunc("/api/v1/posts", res.createNewPostHandler).Methods("POST")
 	r.HandleFunc("/api/v1/posts/add-comment", res.createCommentHandler).Methods("PUT")
@@ -78,7 +79,7 @@ func (r resource) createNewPostHandler(w http.ResponseWriter, req *http.Request)
 		//return
 	}
 
-	r.service.CreatePost(req.Context(), input)
+	err = r.service.CreatePost(req.Context(), input)
 	if err != nil {
 		r.logger.With(req.Context()).Info(err)
 		response := models.NewErrorResponse(
@@ -97,6 +98,26 @@ func (r resource) createNewPostHandler(w http.ResponseWriter, req *http.Request)
 	response := models.NewSuccessResponse(
 		"Success",
 		"Post created!",
+	)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+func (r resource) GetAllRecentPostsHandler(w http.ResponseWriter, req *http.Request) {
+	results, err := r.service.GetAllRecentPosts(req.Context())
+	if err != nil {
+		response := models.NewErrorResponse(
+			[]string{err.Error()},
+			"Failed to fetch posts",
+		)
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	response := models.NewSuccessResponse(
+		results,
+		"Posts retrieved successfully",
 	)
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
