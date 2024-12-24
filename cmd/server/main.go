@@ -14,6 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 )
@@ -21,7 +22,7 @@ import (
 // Version indicates the current version of the application.
 var Version = "1.0.0"
 
-var flagConfig = flag.String("config", "./config/local.yml", "path to the config file")
+var flagConfig = flag.String("config", "./config/dev.yml", "path to the config file")
 
 func main() {
 	fmt.Println("threading..")
@@ -36,8 +37,8 @@ func main() {
 		os.Exit(-1)
 	}
 	// connect to the mongo database
-	//escapedPassword := url.QueryEscape(cfg.DbPassword)
-	connStr := cfg.DbConnectionString // fmt.Sprintf(cfg.DbConnectionString, escapedPassword)
+	escapedPassword := url.QueryEscape(cfg.DbPassword)
+	connStr := fmt.Sprintf(cfg.DbConnectionString, escapedPassword)
 	db, err := SetupMongoDB(connStr, cfg.DbName)
 
 	if err != nil {

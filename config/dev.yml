@@ -1,3 +1,9 @@
-db_connection_string: "mongodb+srv://root:%s@mycluster.randomname.mongodb.net/?retryWrites=true&w=majority"
-db_password: "strongPass"
-db_name: "practicedb"
+#db_connection_stringOld: "mongodb+srv://root:%s@mycluster.randomname.mongodb.net/?retryWrites=true&w=majority"
+db_connection_string: "mongodb+srv://root:%s@helloworldcluster.zndnutk.mongodb.net/test"
+db_password: "WhoDoesNoteLoveMongoDb"
+db_name: "threads99Db"
+dsn: "postgres://127.0.0.1/go_restful?sslmode=disable&user=postgres&password=postgres"
+jwt_signing_key: "LxsKJywDL5O5PvgODZhBH12KE6k2yL8E"
+#db_connection_string: "mongodb+srv://root:%s@helloworldcluster.zndnutk.mongodb.net/?retryWrites=true&w=majority"
+password_hashing_cost: 12
+server_port: 8090

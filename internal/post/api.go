@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/ysodiqakanni/threads99/internal/models"
 	"github.com/ysodiqakanni/threads99/pkg/log"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
@@ -53,21 +54,52 @@ func (r resource) createNewPostHandler(w http.ResponseWriter, req *http.Request)
 	err := json.NewDecoder(req.Body).Decode(&input)
 	if err != nil {
 		r.logger.With(req.Context()).Info(err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response := models.NewErrorResponse(
+			[]string{err.Error()},
+			"Invalid input",
+		)
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
 		return
+
+		//http.Error(w, err.Error(), http.StatusBadRequest)
+		//return
 	}
 	if err := input.Validate(); err != nil {
 		r.logger.With(req.Context()).Info(err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response := models.NewErrorResponse(
+			[]string{err.Error()},
+			"Validation failed!",
+		)
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
 		return
+		//http.Error(w, err.Error(), http.StatusBadRequest)
+		//return
 	}
 
 	r.service.CreatePost(req.Context(), input)
 	if err != nil {
 		r.logger.With(req.Context()).Info(err)
-		http.Error(w, "Error creating new post "+err.Error(), http.StatusInternalServerError)
+		response := models.NewErrorResponse(
+			[]string{err.Error()},
+			"An unknown error occurred!",
+		)
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
 		return
+		//
+		//http.Error(w, "Error creating new post "+err.Error(), http.StatusInternalServerError)
+		//return
 	}
+
+	// Todo: should this endpoint return the new post ID on success?
+	response := models.NewSuccessResponse(
+		"Success",
+		"Post created!",
+	)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (r resource) createCommentHandler(w http.ResponseWriter, req *http.Request) {
