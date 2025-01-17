@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/ysodiqakanni/threads99/internal/models"
 	"github.com/ysodiqakanni/threads99/pkg/log"
 	"net/http"
 )
@@ -11,7 +12,7 @@ import (
 func RegisterHandlers(r *mux.Router, service Service, logger log.Logger, secret string) {
 	res := resource{service, logger}
 	r.HandleFunc("/api/v1/communities", res.createCommunityHandler).Methods("POST")
-
+	r.HandleFunc("/api/v1/communities", res.GetAllCommunitiesHandler).Methods("GET")
 	r.Use()
 }
 
@@ -44,4 +45,27 @@ func (r resource) createCommunityHandler(w http.ResponseWriter, req *http.Reques
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(community)
+}
+
+func (r resource) GetAllCommunitiesHandler(w http.ResponseWriter, req *http.Request) {
+	results, err := r.service.GetAllCommunities(req.Context())
+	if err != nil {
+		response := models.NewErrorResponse(
+			[]string{err.Error()},
+			"Failed to fetch communities",
+		)
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+		return
+
+		//http.Error(w, err.Error(), http.StatusInternalServerError)
+		//return
+	}
+
+	response := models.NewSuccessResponse(
+		results,
+		"Communities retrieved successfully",
+	)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 }

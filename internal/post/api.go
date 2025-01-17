@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/ysodiqakanni/threads99/internal/models"
 	"github.com/ysodiqakanni/threads99/pkg/log"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
@@ -14,6 +15,7 @@ func RegisterHandlers(r *mux.Router, service Service, logger log.Logger, secret 
 	//r.HandleFunc("/api/v1/categories/{id}", res.getByIdHandler).Methods("GET")
 	//r.HandleFunc("/api/v1/posts", res.getAllHandler).Methods("GET")
 	r.HandleFunc("/api/v1/posts", res.getByIdHandler).Methods("GET")
+	r.HandleFunc("/api/v1/posts/recent", res.GetAllRecentPostsHandler).Methods("GET")
 	r.HandleFunc("/api/v1/posts/{postId}/comments", res.getCommentsHandler).Methods("GET")
 	r.HandleFunc("/api/v1/posts", res.createNewPostHandler).Methods("POST")
 	r.HandleFunc("/api/v1/posts/add-comment", res.createCommentHandler).Methods("PUT")
@@ -53,21 +55,72 @@ func (r resource) createNewPostHandler(w http.ResponseWriter, req *http.Request)
 	err := json.NewDecoder(req.Body).Decode(&input)
 	if err != nil {
 		r.logger.With(req.Context()).Info(err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response := models.NewErrorResponse(
+			[]string{err.Error()},
+			"Invalid input",
+		)
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
 		return
+
+		//http.Error(w, err.Error(), http.StatusBadRequest)
+		//return
 	}
 	if err := input.Validate(); err != nil {
 		r.logger.With(req.Context()).Info(err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response := models.NewErrorResponse(
+			[]string{err.Error()},
+			"Validation failed!",
+		)
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+		return
+		//http.Error(w, err.Error(), http.StatusBadRequest)
+		//return
+	}
+
+	err = r.service.CreatePost(req.Context(), input)
+	if err != nil {
+		r.logger.With(req.Context()).Info(err)
+		response := models.NewErrorResponse(
+			[]string{err.Error()},
+			"An unknown error occurred!",
+		)
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+		return
+		//
+		//http.Error(w, "Error creating new post "+err.Error(), http.StatusInternalServerError)
+		//return
+	}
+
+	// Todo: should this endpoint return the new post ID on success?
+	response := models.NewSuccessResponse(
+		"Success",
+		"Post created!",
+	)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+func (r resource) GetAllRecentPostsHandler(w http.ResponseWriter, req *http.Request) {
+	results, err := r.service.GetAllRecentPosts(req.Context())
+	if err != nil {
+		response := models.NewErrorResponse(
+			[]string{err.Error()},
+			"Failed to fetch posts",
+		)
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
 		return
 	}
 
-	r.service.CreatePost(req.Context(), input)
-	if err != nil {
-		r.logger.With(req.Context()).Info(err)
-		http.Error(w, "Error creating new post "+err.Error(), http.StatusInternalServerError)
-		return
-	}
+	response := models.NewSuccessResponse(
+		results,
+		"Posts retrieved successfully",
+	)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (r resource) createCommentHandler(w http.ResponseWriter, req *http.Request) {
