@@ -79,7 +79,7 @@ func (r resource) createNewPostHandler(w http.ResponseWriter, req *http.Request)
 		//return
 	}
 
-	err = r.service.CreatePost(req.Context(), input)
+	err, postId := r.service.CreatePost(req.Context(), input)
 	if err != nil {
 		r.logger.With(req.Context()).Info(err)
 		response := models.NewErrorResponse(
@@ -96,7 +96,7 @@ func (r resource) createNewPostHandler(w http.ResponseWriter, req *http.Request)
 
 	// Todo: should this endpoint return the new post ID on success?
 	response := models.NewSuccessResponse(
-		"Success",
+		postId,
 		"Post created!",
 	)
 	w.WriteHeader(http.StatusOK)

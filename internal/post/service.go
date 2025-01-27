@@ -22,7 +22,7 @@ type CommentModel struct {
 
 type Service interface {
 	Get(ctx context.Context, id primitive.ObjectID) (Post, error)
-	CreatePost(ctx context.Context, request CreateNewPostRequest) error
+	CreatePost(ctx context.Context, request CreateNewPostRequest) (error, string)
 	AddCommentToPost(ctx context.Context, commentRequest AddCommentToPostRequest) error
 	UpvoteComment(ctx context.Context, request CommentUpvoteRequest) error
 	UpvotePost(ctx context.Context, request PostUpvoteRequest) error
@@ -46,6 +46,8 @@ type CreateNewPostRequest struct {
 	Content         string `json:"content"`
 	CreatedByUserId string `json:"created_by_user_id"`
 	CommunityId     string `json:"community_id"`
+	CommunityName   string `json:"CommunityName"`
+	PostType        string `json:"postType"`
 }
 
 type AddCommentToPostRequest struct {
@@ -104,24 +106,25 @@ func (s service) Get(ctx context.Context, id primitive.ObjectID) (Post, error) {
 	return Post{post}, nil
 }
 
-func (s service) CreatePost(ctx context.Context, request CreateNewPostRequest) error {
+func (s service) CreatePost(ctx context.Context, request CreateNewPostRequest) (error, string) {
 	userId, err := primitive.ObjectIDFromHex(request.CreatedByUserId)
+	username := "testUsername" // Todo: retrieve from the jwt
 
 	if err != nil {
-		return err
+		return err, ""
 	}
 	communityId, err := primitive.ObjectIDFromHex(request.CommunityId)
 	if err != nil {
-		return err
+		return err, ""
 	}
 	// now let's get community by ID
 	community, err := s.communityRepo.Get(ctx, communityId)
 	if err != nil {
 		// error retrieving community object
-		return err
+		return err, ""
 	}
 	if community.Name == "" {
-		return errors.New("The community with this ID cannot be found.")
+		return errors.New("The community with this ID cannot be found."), ""
 	}
 
 	post := entity.Post{
@@ -129,12 +132,12 @@ func (s service) CreatePost(ctx context.Context, request CreateNewPostRequest) e
 		Content:         request.Content,
 		CreatedByUserId: userId,
 		CommunityID:     communityId,
-		//Community:       community, // Todo: take this out!
-		Comments: []entity.Comment{},
+		CommunityName:   request.CommunityName,
+		Comments:        []entity.Comment{},
 
 		Author: entity.Author{
 			ID:       userId,
-			Username: "dummy_name",
+			Username: username,
 		},
 		Metadata: entity.Metadata{
 			CreatedAt: time.Now(),
@@ -148,8 +151,8 @@ func (s service) CreatePost(ctx context.Context, request CreateNewPostRequest) e
 		UpdatedAt: time.Now(),
 	}
 
-	_, err = s.repo.Create(ctx, post)
-	return err
+	id, err := s.repo.Create(ctx, post)
+	return err, id.Hex()
 }
 
 func (s service) GetAllRecentPosts(ctx context.Context) ([]dto.TimelinePost, error) {
