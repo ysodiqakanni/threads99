@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/ysodiqakanni/threads99/internal/dto"
 	"github.com/ysodiqakanni/threads99/internal/entity"
 	"github.com/ysodiqakanni/threads99/pkg/dbcontext"
 	"github.com/ysodiqakanni/threads99/pkg/log"
@@ -21,7 +22,7 @@ type Repository interface {
 	UpvoteComment(ctx context.Context, commentId primitive.ObjectID, postId primitive.ObjectID, voteValue int) error
 	UpvotePost(ctx context.Context, postId primitive.ObjectID, voteValue int) error
 	GetCommentsByPostId(ctx context.Context, postId primitive.ObjectID) ([]entity.Comment, error)
-	GetAllRecentPosts(ctx context.Context) ([]entity.Post, error)
+	GetAllRecentPosts(ctx context.Context) ([]dto.TimelinePost, error)
 }
 
 // repository persists data in database
@@ -60,23 +61,55 @@ func (r repository) Create(ctx context.Context, postRequest entity.Post) (*primi
 }
 
 // Todo: Should be removed! Never get ALL!!!
-func (r repository) GetAllRecentPosts(ctx context.Context) ([]entity.Post, error) {
-	// Create options to sort by creation time in descending order (-1)
-	opts := options.Find().SetSort(bson.D{{Key: "created_at", Value: -1}})
-	// Find all documents with sorting options
+func (r repository) GetAllRecentPosts(ctx context.Context) ([]dto.TimelinePost, error) {
+	projection := bson.D{
+		{Key: "_id", Value: 1},
+		{Key: "title", Value: 1},
+		{Key: "communityId", Value: 1},
+		{Key: "communityName", Value: 1},
+		{Key: "content.body", Value: 1},
+		{Key: "content.type", Value: 1},
+		{Key: "content.mediaUrls", Value: 1},
+		{Key: "author._id", Value: 1},
+		{Key: "metadata.createdAt", Value: 1},
+	}
+	opts := options.Find().
+		SetSort(bson.D{{Key: "created_at", Value: -1}}).
+		SetProjection(projection).
+		SetLimit(30)
+
+	// Execute the query
 	cursor, err := r.collection.Find(ctx, bson.M{}, opts)
 	if err != nil {
 		return nil, err
 	}
 	defer cursor.Close(ctx)
-
-	// Decode all documents into a slice of communities
-	var posts []entity.Post
+	// Decode the results into our lightweight struct
+	var posts []dto.TimelinePost
 	if err = cursor.All(ctx, &posts); err != nil {
 		return nil, err
 	}
 
 	return posts, nil
+	// Previous codes
+	/*
+		// Create options to sort by creation time in descending order (-1)
+		opts := options.Find().SetSort(bson.D{{Key: "created_at", Value: -1}})
+		// Find all documents with sorting options
+		cursor, err := r.collection.Find(ctx, bson.M{}, opts)
+		if err != nil {
+			return nil, err
+		}
+		defer cursor.Close(ctx)
+
+		// Decode all documents into a slice of posts
+		var posts []entity.Post
+		if err = cursor.All(ctx, &posts); err != nil {
+			return nil, err
+		}
+
+		return posts, nil
+	*/
 }
 func (r repository) UpvotePost(ctx context.Context, postId primitive.ObjectID, voteValue int) error {
 

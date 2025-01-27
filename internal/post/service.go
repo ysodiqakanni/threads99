@@ -5,6 +5,7 @@ import (
 	"errors"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/ysodiqakanni/threads99/internal/community"
+	"github.com/ysodiqakanni/threads99/internal/dto"
 	"github.com/ysodiqakanni/threads99/internal/entity"
 	"github.com/ysodiqakanni/threads99/pkg/log"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -26,7 +27,7 @@ type Service interface {
 	UpvoteComment(ctx context.Context, request CommentUpvoteRequest) error
 	UpvotePost(ctx context.Context, request PostUpvoteRequest) error
 	GetCommentsByPostId(ctx context.Context, postIdStr string) ([]entity.Comment, error)
-	GetAllRecentPosts(ctx context.Context) ([]entity.Post, error)
+	GetAllRecentPosts(ctx context.Context) ([]dto.TimelinePost, error)
 }
 
 type service struct {
@@ -122,19 +123,36 @@ func (s service) CreatePost(ctx context.Context, request CreateNewPostRequest) e
 	if community.Name == "" {
 		return errors.New("The community with this ID cannot be found.")
 	}
+
 	post := entity.Post{
 		Title:           request.Title,
 		Content:         request.Content,
 		CreatedByUserId: userId,
-		Community:       community,
-		Comments:        []entity.Comment{},
+		CommunityID:     communityId,
+		//Community:       community, // Todo: take this out!
+		Comments: []entity.Comment{},
+
+		Author: entity.Author{
+			ID:       userId,
+			Username: "dummy_name",
+		},
+		Metadata: entity.Metadata{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		MainContent: entity.Content{
+			Type: "Text", // Todo: change to enum and handle different post types.
+			Body: request.Content,
+		},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	_, err = s.repo.Create(ctx, post)
 	return err
 }
 
-func (s service) GetAllRecentPosts(ctx context.Context) ([]entity.Post, error) {
+func (s service) GetAllRecentPosts(ctx context.Context) ([]dto.TimelinePost, error) {
 	posts, err := s.repo.GetAllRecentPosts(ctx)
 	if err != nil {
 		return nil, err
