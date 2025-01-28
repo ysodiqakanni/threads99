@@ -23,6 +23,7 @@ type Repository interface {
 	UpvotePost(ctx context.Context, postId primitive.ObjectID, voteValue int) error
 	GetCommentsByPostId(ctx context.Context, postId primitive.ObjectID) ([]entity.Comment, error)
 	GetAllRecentPosts(ctx context.Context) ([]dto.TimelinePost, error)
+	GetPostLiteById(ctx context.Context, id primitive.ObjectID) (*dto.PostResponse, error)
 }
 
 // repository persists data in database
@@ -48,6 +49,73 @@ func (r repository) Get(ctx context.Context, id primitive.ObjectID) (entity.Post
 	err := r.collection.FindOne(ctx, filter).Decode(&post)
 
 	return post, err
+}
+
+func (r repository) GetPostLiteById(ctx context.Context, id primitive.ObjectID) (*dto.PostResponse, error) {
+	filter := bson.M{"_id": id}
+
+	// Define projection to fetch only needed fields
+	projection := bson.M{
+		"_id":                1,
+		"title":              1,
+		"communityId":        1,
+		"communityName":      1,
+		"author._id":         1,
+		"author.username":    1,
+		"content.type":       1,
+		"content.body":       1,
+		"created_at":         1,
+		"stats.commentCount": 1,
+		"stats.upvotes":      1,
+		"stats.downvotes":    1,
+	}
+
+	opts := options.FindOne().SetProjection(projection)
+
+	var post dto.PostResponse
+	err := r.collection.FindOne(ctx, filter, opts).Decode(&post)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &post, nil
+
+	///
+	/*
+
+		projection := bson.D{
+			{"_id", 1},
+			{"communityId", 1},
+			{"communityName", 1},
+			{"title", 1},
+			{"content.body", 1},
+			{"content.type", 1},
+			{"author.username", 1},
+			{"author._id", 1},
+			{"created_at", 1},
+			{"stats.commentCount", 1},
+			{"votes.up", 1},
+			{"votes.down", 1},
+		}
+
+		// Create filter for finding by postID
+		filter := bson.M{"_id": id}
+
+		// Execute the query
+		var post dto.PostResponse
+		err := r.collection.FindOne(ctx, filter, options.FindOne().SetProjection(projection)).Decode(&post)
+		if err != nil {
+			if err == mongo.ErrNoDocuments {
+				return nil, nil
+			}
+			return nil, err
+		}
+
+		return &post, nil
+	*/
 }
 
 // / SECTION POSTS

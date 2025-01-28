@@ -22,6 +22,7 @@ type CommentModel struct {
 
 type Service interface {
 	Get(ctx context.Context, id primitive.ObjectID) (Post, error)
+	GetPostLiteById(ctx context.Context, id primitive.ObjectID) (*dto.PostResponse, error)
 	CreatePost(ctx context.Context, request CreateNewPostRequest) (error, string)
 	AddCommentToPost(ctx context.Context, commentRequest AddCommentToPostRequest) error
 	UpvoteComment(ctx context.Context, request CommentUpvoteRequest) error
@@ -104,6 +105,14 @@ func (s service) Get(ctx context.Context, id primitive.ObjectID) (Post, error) {
 		return Post{}, err
 	}
 	return Post{post}, nil
+}
+
+func (s service) GetPostLiteById(ctx context.Context, id primitive.ObjectID) (*dto.PostResponse, error) {
+	post, err := s.repo.GetPostLiteById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return post, nil
 }
 
 func (s service) CreatePost(ctx context.Context, request CreateNewPostRequest) (error, string) {
