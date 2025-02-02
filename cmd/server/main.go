@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/ysodiqakanni/threads99/internal/comment"
 	"github.com/ysodiqakanni/threads99/internal/community"
 	"github.com/ysodiqakanni/threads99/internal/config"
 	"github.com/ysodiqakanni/threads99/internal/post"
@@ -116,6 +117,11 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 
 	post.RegisterHandlers(r,
 		post.NewService(post.NewRepository(db, logger), community.NewRepository(db, logger), logger),
+		logger,
+		cfg.JWTSigningKey)
+
+	comment.RegisterHandlers(r,
+		comment.NewService(comment.NewRepository(db, logger), logger),
 		logger,
 		cfg.JWTSigningKey)
 

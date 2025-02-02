@@ -20,7 +20,7 @@ func RegisterHandlers(r *mux.Router, service Service, logger log.Logger, secret 
 
 	r.HandleFunc("/api/v1/posts/{postId}/comments", res.getCommentsHandler).Methods("GET")
 	r.HandleFunc("/api/v1/posts", res.createNewPostHandler).Methods("POST")
-	r.HandleFunc("/api/v1/posts/add-comment", res.createCommentHandler).Methods("PUT")
+	//r.HandleFunc("/api/v1/posts/add-comment", res.createCommentHandler).Methods("PUT")
 	r.HandleFunc("/api/v1/posts/upvote-comment", res.voteCommentHandler).Methods("PUT")
 	r.HandleFunc("/api/v1/posts/vote", res.votePostHandler).Methods("PUT")
 	// Protected Endpoints
@@ -139,6 +139,7 @@ func (r resource) GetAllRecentPostsHandler(w http.ResponseWriter, req *http.Requ
 	json.NewEncoder(w).Encode(response)
 }
 
+/*
 func (r resource) createCommentHandler(w http.ResponseWriter, req *http.Request) {
 	var input AddCommentToPostRequest
 	err := json.NewDecoder(req.Body).Decode(&input)
@@ -160,6 +161,7 @@ func (r resource) createCommentHandler(w http.ResponseWriter, req *http.Request)
 		return
 	}
 }
+*/
 
 func (r resource) votePostHandler(w http.ResponseWriter, req *http.Request) {
 	var input PostUpvoteRequest

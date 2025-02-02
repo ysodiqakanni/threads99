@@ -24,7 +24,7 @@ type Service interface {
 	Get(ctx context.Context, id primitive.ObjectID) (Post, error)
 	GetPostLiteById(ctx context.Context, id primitive.ObjectID) (*dto.PostResponse, error)
 	CreatePost(ctx context.Context, request CreateNewPostRequest) (error, string)
-	AddCommentToPost(ctx context.Context, commentRequest AddCommentToPostRequest) error
+	//AddCommentToPost(ctx context.Context, commentRequest AddCommentToPostRequest) error
 	UpvoteComment(ctx context.Context, request CommentUpvoteRequest) error
 	UpvotePost(ctx context.Context, request PostUpvoteRequest) error
 	GetCommentsByPostId(ctx context.Context, postIdStr string) ([]entity.Comment, error)
@@ -142,8 +142,6 @@ func (s service) CreatePost(ctx context.Context, request CreateNewPostRequest) (
 		CreatedByUserId: userId,
 		CommunityID:     communityId,
 		CommunityName:   request.CommunityName,
-		Comments:        []entity.Comment{},
-
 		Author: entity.Author{
 			ID:       userId,
 			Username: username,
@@ -181,6 +179,7 @@ func (s service) UpvotePost(ctx context.Context, request PostUpvoteRequest) erro
 	return err
 }
 
+/*
 func (s service) AddCommentToPost(ctx context.Context, commentRequest AddCommentToPostRequest) error {
 	commentUserId, err := primitive.ObjectIDFromHex(commentRequest.CreatedByUserId)
 	if err != nil {
@@ -201,6 +200,7 @@ func (s service) AddCommentToPost(ctx context.Context, commentRequest AddComment
 
 	return err
 }
+*/
 
 func (s service) UpvoteComment(ctx context.Context, request CommentUpvoteRequest) error {
 	commentId, err := primitive.ObjectIDFromHex(request.CommentId)

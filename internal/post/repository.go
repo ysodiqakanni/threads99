@@ -12,13 +12,12 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"time"
 )
 
 type Repository interface {
 	Get(ctx context.Context, id primitive.ObjectID) (entity.Post, error)
 	Create(ctx context.Context, postRequest entity.Post) (*primitive.ObjectID, error)
-	AddCommentToPost(ctx context.Context, postId primitive.ObjectID, comment entity.Comment) error
+	//AddCommentToPost(ctx context.Context, postId primitive.ObjectID, comment entity.Comment) error
 	UpvoteComment(ctx context.Context, commentId primitive.ObjectID, postId primitive.ObjectID, voteValue int) error
 	UpvotePost(ctx context.Context, postId primitive.ObjectID, voteValue int) error
 	GetCommentsByPostId(ctx context.Context, postId primitive.ObjectID) ([]entity.Comment, error)
@@ -32,6 +31,7 @@ type repository struct {
 	logger     log.Logger
 }
 
+// Called in main.go to initialize the repo.
 func NewRepository(db *dbcontext.DB, logger log.Logger) Repository {
 	col := db.DB().Collection("posts")
 	logger.Infof("collection retrieved")
@@ -193,6 +193,7 @@ func (r repository) UpvotePost(ctx context.Context, postId primitive.ObjectID, v
 }
 
 // SECTION POSTS
+/*
 func (r repository) AddCommentToPost(ctx context.Context, postId primitive.ObjectID, comment entity.Comment) error {
 	filter := bson.M{"_id": postId}
 	post, err := r.Get(ctx, postId)
@@ -217,6 +218,7 @@ func (r repository) AddCommentToPost(ctx context.Context, postId primitive.Objec
 
 	return err
 }
+*/
 
 func (r repository) UpvoteComment(ctx context.Context, commentId primitive.ObjectID, postId primitive.ObjectID, voteValue int) error {
 

@@ -10,17 +10,6 @@ type Votes struct {
 	Down int `bson:"down"`
 }
 
-type Comment struct {
-	ID              primitive.ObjectID `bson:"_id,omitempty"`
-	Content         string             `bson:"content"`
-	CreatedByUserId primitive.ObjectID `bson:"created_by_user_id" bson:"created_by_user_id"`
-	CreatedAt       time.Time          `json:"created_at"`
-	UpdatedAt       time.Time          `json:"updated_at"`
-	IsDeleted       bool               `json:"is_deleted"`
-
-	Votes Votes `bson:"votes"`
-}
-
 type Stats struct {
 	Upvotes      int `bson:"upvotes" json:"upvotes"`
 	Downvotes    int `bson:"downvotes" json:"downvotes"`
@@ -67,10 +56,8 @@ type Post struct {
 	Stats           Stats              `bson:"stats" json:"stats"`
 	CreatedByUserId primitive.ObjectID `json:"created_by_user_id" bson:"created_by_user_id"`
 
-	IsDeleted bool      `json:"is_deleted" bson:"is_deleted"`
-	Votes     Votes     `bson:"votes"`
-	Comments  []Comment `bson:"comments"`
-	//Community Community `bson:"community"` // Todo: deprecate
+	IsDeleted bool  `json:"is_deleted" bson:"is_deleted"`
+	Votes     Votes `bson:"votes"`
 
 	//Flags struct {
 	//	IsNSFW   bool `bson:"isNSFW" json:"isNSFW"`
