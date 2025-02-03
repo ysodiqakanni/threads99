@@ -121,7 +121,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 		cfg.JWTSigningKey)
 
 	comment.RegisterHandlers(r,
-		comment.NewService(comment.NewRepository(db, logger), logger),
+		comment.NewService(comment.NewRepository(db, logger), post.NewRepository(db, logger), logger),
 		logger,
 		cfg.JWTSigningKey)
 

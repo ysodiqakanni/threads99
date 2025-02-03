@@ -1,6 +1,9 @@
 package dto
 
-import validation "github.com/go-ozzo/ozzo-validation/v4"
+import (
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/ysodiqakanni/threads99/internal/entity"
+)
 
 type CreateNewCommentRequest struct {
 	PostId          string
@@ -24,4 +27,10 @@ func (m CreateNewCommentRequest) Validate() error {
 			validation.When(m.ContentText == "", validation.Required).Else(validation.Empty),
 		),
 	)
+}
+
+// A tree of nested comments.
+type CommentTree struct {
+	Comment entity.Comment `json:"comment"`
+	Replies []CommentTree  `json:"replies"`
 }

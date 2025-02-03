@@ -2,16 +2,19 @@ package comment
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/ysodiqakanni/threads99/internal/dto"
 	"github.com/ysodiqakanni/threads99/internal/models"
 	"github.com/ysodiqakanni/threads99/pkg/log"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
 )
 
 func RegisterHandlers(r *mux.Router, service Service, logger log.Logger, secret string) {
 	res := resource{service, logger}
 	r.HandleFunc("/api/v1/comments", res.createCommentHandler).Methods("POST")
+	r.HandleFunc("/api/v1/posts/{postId}/comments", res.getCommentsByPostIdHandler).Methods("GET")
 	// Protected Endpoints
 	//r.Handle("/api/v1/categories", auth.AuthenticateMiddleware(auth.RoleMiddleware(http.HandlerFunc(res.create), "admin"), secret)).Methods("POST")
 	r.Use()
@@ -58,6 +61,43 @@ func (r resource) createCommentHandler(w http.ResponseWriter, req *http.Request)
 	)
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
+}
+
+func (r resource) getCommentsByPostIdHandler(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	postId := vars["postId"]
+	fmt.Println("Attempting to load comments for post: " + postId)
+
+	_id, err := primitive.ObjectIDFromHex(postId)
+	if err != nil {
+		response := models.NewErrorResponse(
+			[]string{err.Error()},
+			"Failed to fetch comments. Invalid postId",
+		)
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	commentsResult, err := r.service.GetCommentsByPostId(req.Context(), _id)
+
+	if err != nil {
+		response := models.NewErrorResponse(
+			[]string{err.Error()},
+			"Error fetching comments.",
+		)
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	response := models.NewSuccessResponse(
+		commentsResult,
+		"Post retrieved successfully",
+	)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+	return
 }
 
 /*

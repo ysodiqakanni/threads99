@@ -18,7 +18,7 @@ func RegisterHandlers(r *mux.Router, service Service, logger log.Logger, secret 
 	r.HandleFunc("/api/v1/posts/recent", res.GetAllRecentPostsHandler).Methods("GET")
 	r.HandleFunc("/api/v1/posts/{postId}", res.getByIdHandler).Methods("GET")
 
-	r.HandleFunc("/api/v1/posts/{postId}/comments", res.getCommentsHandler).Methods("GET")
+	//r.HandleFunc("/api/v1/posts/{postId}/comments", res.getCommentsHandler).Methods("GET")
 	r.HandleFunc("/api/v1/posts", res.createNewPostHandler).Methods("POST")
 	//r.HandleFunc("/api/v1/posts/add-comment", res.createCommentHandler).Methods("PUT")
 	r.HandleFunc("/api/v1/posts/upvote-comment", res.voteCommentHandler).Methods("PUT")
