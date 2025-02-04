@@ -9,12 +9,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"sort"
 )
 
 type Repository interface {
 	CreateNewComment(ctx context.Context, comment entity.Comment) (error, *primitive.ObjectID)
-	GetCommentsByPostId(ctx context.Context, postId primitive.ObjectID) ([]dto.CommentTree, error)
+	GetCommentsByPostId(ctx context.Context, postId primitive.ObjectID) ([]*dto.CommentTree, error)
 }
 
 // repository persists data in database
@@ -41,7 +40,7 @@ func (r repository) CreateNewComment(ctx context.Context, comment entity.Comment
 	id := result.InsertedID.(primitive.ObjectID)
 	return err, &id
 }
-func (r repository) GetCommentsByPostId(ctx context.Context, postId primitive.ObjectID) ([]dto.CommentTree, error) {
+func (r repository) GetCommentsByPostId(ctx context.Context, postId primitive.ObjectID) ([]*dto.CommentTree, error) {
 	// Todo: throw error if the post does not exist.
 	// Todo: add pagination for comments.
 	var comments []entity.Comment
@@ -50,7 +49,7 @@ func (r repository) GetCommentsByPostId(ctx context.Context, postId primitive.Ob
 	})
 
 	// the parent comments to return. Each can have one or more children.
-	var parentComments []dto.CommentTree
+	var parentComments []*dto.CommentTree
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return parentComments, nil
@@ -75,41 +74,55 @@ func (r repository) GetCommentsByPostId(ctx context.Context, postId primitive.Ob
 	// now we loop, if you're a child parent, you're added to the nodes of your parent.
 	// otherwise, you're added to the result.
 
-	commentMap := make(map[primitive.ObjectID]dto.CommentTree) // we could just use a list but dict is good for O(1) lookup
+	var rootComments []*dto.CommentTree
+
+	commentMap := make(map[primitive.ObjectID]*dto.CommentTree) // we could just use a list but dict is good for O(1) lookup
 	for _, comment := range comments {
 		commentTree := dto.CommentTree{
 			Comment: comment,
-			Replies: []dto.CommentTree{},
+			Replies: []*dto.CommentTree{},
 		}
-		commentMap[comment.ID] = commentTree
+		commentMap[comment.ID] = &commentTree // It's important to store the pointer to the data.
 	}
+
+	//for _, comment := range comments {
+	//	if comment.ParentID != nil {
+	//		// This is a nested reply. Find its parent and add to its replies.
+	//		if _, exists := commentMap[*comment.ParentID]; exists {
+	//			parentTree := commentMap[*comment.ParentID]                             // the parent comment.
+	//			parentTree.Replies = append(parentTree.Replies, commentMap[comment.ID]) // the replies being appended to
+	//			commentMap[*comment.ParentID] = parentTree                              // save back the parent.
+	//		}
+	//	} else {
+	//		// A root or parent comment found! Add to the results.
+	//		//parentComments = append(parentComments, commentMap[comment.ID])
+	//	}
+	//}
 
 	for _, comment := range comments {
 		if comment.ParentID != nil {
 			// This is a nested reply. Find its parent and add to its replies.
-			if _, exists := commentMap[*comment.ParentID]; exists {
-				parentTree := commentMap[*comment.ParentID]                             // the parent comment.
-				parentTree.Replies = append(parentTree.Replies, commentMap[comment.ID]) // the replies being appended to
-				commentMap[*comment.ParentID] = parentTree                              // save back the parent.
+			if parentTree, exists := commentMap[*comment.ParentID]; exists {
+				parentTree.Replies = append(parentTree.Replies, commentMap[comment.ID]) // Dereference
 			}
 		} else {
 			// A root or parent comment found! Add to the results.
-			//parentComments = append(parentComments, commentMap[comment.ID])
+			rootComments = append(rootComments, commentMap[comment.ID]) // Dereference
 		}
 	}
 
 	// Third pass:
 	// Todo: fix pointer issue in prior loop to avoid this extra loop.
-	for _, comment := range comments {
-		if comment.ParentID == nil {
-			parentComments = append(parentComments, commentMap[comment.ID])
-		}
-	}
+	//for _, comment := range comments {
+	//	if comment.ParentID == nil {
+	//		parentComments = append(parentComments, commentMap[comment.ID])
+	//	}
+	//}
 
-	sort.Slice(parentComments, func(i, j int) bool {
-		return parentComments[i].Comment.Metadata.CreatedAt.After(
-			parentComments[j].Comment.Metadata.CreatedAt)
-	})
+	//sort.Slice(parentComments, func(i, j int) bool {
+	//	return parentComments[i].Comment.Metadata.CreatedAt.After(
+	//		parentComments[j].Comment.Metadata.CreatedAt)
+	//})
 
-	return parentComments, nil
+	return rootComments, nil
 }

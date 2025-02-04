@@ -32,5 +32,5 @@ func (m CreateNewCommentRequest) Validate() error {
 // A tree of nested comments.
 type CommentTree struct {
 	Comment entity.Comment `json:"comment"`
-	Replies []CommentTree  `json:"replies"`
+	Replies []*CommentTree `json:"replies"`
 }

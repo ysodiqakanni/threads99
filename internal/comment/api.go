@@ -93,7 +93,7 @@ func (r resource) getCommentsByPostIdHandler(w http.ResponseWriter, req *http.Re
 
 	response := models.NewSuccessResponse(
 		commentsResult,
-		"Post retrieved successfully",
+		"Comments retrieved successfully",
 	)
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)

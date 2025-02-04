@@ -13,7 +13,7 @@ import (
 
 type Service interface {
 	CreateNewComment(ctx context.Context, request dto.CreateNewCommentRequest) (error, string)
-	GetCommentsByPostId(ctx context.Context, postId primitive.ObjectID) ([]dto.CommentTree, error)
+	GetCommentsByPostId(ctx context.Context, postId primitive.ObjectID) ([]*dto.CommentTree, error)
 }
 type service struct {
 	repo     Repository
@@ -67,17 +67,17 @@ func (s service) CreateNewComment(ctx context.Context, request dto.CreateNewComm
 	return err, id.Hex()
 }
 
-func (s service) GetCommentsByPostId(ctx context.Context, postId primitive.ObjectID) ([]dto.CommentTree, error) {
-	var results []dto.CommentTree
+func (s service) GetCommentsByPostId(ctx context.Context, postId primitive.ObjectID) ([]*dto.CommentTree, error) {
+	var results []*dto.CommentTree
 
 	// get the post by Id.
 	post, err := s.postRepo.Get(ctx, postId)
 	if err != nil {
 		// something weird happend.
-		return results, err
+		return nil, err
 	}
 	if post.ID == primitive.NewObjectID() {
-		return results, errors.New("The post can not be found.")
+		return nil, errors.New("The post can not be found.")
 	}
 
 	results, err = s.repo.GetCommentsByPostId(ctx, postId)
