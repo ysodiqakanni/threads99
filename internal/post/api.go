@@ -14,11 +14,13 @@ func RegisterHandlers(r *mux.Router, service Service, logger log.Logger, secret 
 	res := resource{service, logger}
 	//r.HandleFunc("/api/v1/categories/{id}", res.getByIdHandler).Methods("GET")
 	//r.HandleFunc("/api/v1/posts", res.getAllHandler).Methods("GET")
-	r.HandleFunc("/api/v1/posts", res.getByIdHandler).Methods("GET")
+	//r.HandleFunc("/api/v1/posts", res.getByIdHandler).Methods("GET")
 	r.HandleFunc("/api/v1/posts/recent", res.GetAllRecentPostsHandler).Methods("GET")
-	r.HandleFunc("/api/v1/posts/{postId}/comments", res.getCommentsHandler).Methods("GET")
+	r.HandleFunc("/api/v1/posts/{postId}", res.getByIdHandler).Methods("GET")
+
+	//r.HandleFunc("/api/v1/posts/{postId}/comments", res.getCommentsHandler).Methods("GET")
 	r.HandleFunc("/api/v1/posts", res.createNewPostHandler).Methods("POST")
-	r.HandleFunc("/api/v1/posts/add-comment", res.createCommentHandler).Methods("PUT")
+	//r.HandleFunc("/api/v1/posts/add-comment", res.createCommentHandler).Methods("PUT")
 	r.HandleFunc("/api/v1/posts/upvote-comment", res.voteCommentHandler).Methods("PUT")
 	r.HandleFunc("/api/v1/posts/vote", res.votePostHandler).Methods("PUT")
 	// Protected Endpoints
@@ -35,13 +37,27 @@ type resource struct {
 //	return service{repo, userRepo, logger}
 //}
 
-func (r resource) getByIdHandler(w http.ResponseWriter, req *http.Request) {
+func (r resource) getByIdHandlerOld(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	id := vars["id"]
 	idk, _ := primitive.ObjectIDFromHex(id)
 
 	post, _ := r.service.Get(req.Context(), idk)
 	json.NewEncoder(w).Encode(post)
+}
+
+func (r resource) getByIdHandler(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	id := vars["postId"]
+	idk, _ := primitive.ObjectIDFromHex(id)
+
+	post, _ := r.service.GetPostLiteById(req.Context(), idk)
+
+	response := models.NewSuccessResponse(
+		post,
+		"Post retrieved successfully",
+	)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (r resource) getAllHandler(w http.ResponseWriter, req *http.Request) {
@@ -79,7 +95,7 @@ func (r resource) createNewPostHandler(w http.ResponseWriter, req *http.Request)
 		//return
 	}
 
-	err = r.service.CreatePost(req.Context(), input)
+	err, postId := r.service.CreatePost(req.Context(), input)
 	if err != nil {
 		r.logger.With(req.Context()).Info(err)
 		response := models.NewErrorResponse(
@@ -96,7 +112,7 @@ func (r resource) createNewPostHandler(w http.ResponseWriter, req *http.Request)
 
 	// Todo: should this endpoint return the new post ID on success?
 	response := models.NewSuccessResponse(
-		"Success",
+		postId,
 		"Post created!",
 	)
 	w.WriteHeader(http.StatusOK)
@@ -123,6 +139,7 @@ func (r resource) GetAllRecentPostsHandler(w http.ResponseWriter, req *http.Requ
 	json.NewEncoder(w).Encode(response)
 }
 
+/*
 func (r resource) createCommentHandler(w http.ResponseWriter, req *http.Request) {
 	var input AddCommentToPostRequest
 	err := json.NewDecoder(req.Body).Decode(&input)
@@ -144,6 +161,7 @@ func (r resource) createCommentHandler(w http.ResponseWriter, req *http.Request)
 		return
 	}
 }
+*/
 
 func (r resource) votePostHandler(w http.ResponseWriter, req *http.Request) {
 	var input PostUpvoteRequest

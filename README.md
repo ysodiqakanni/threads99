@@ -23,3 +23,4 @@ docker pull ysodiqakanni/swizzle-api:latest
 docker run -d -p 8600:8090 --name swizzle-api ysodiqakanni/swizzle-api:latest
 
 press20Five
+#mongosh mongodb+srv://root:Password@helloworldcluster.zndnutk.mongodb.net/test
