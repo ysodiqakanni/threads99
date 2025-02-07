@@ -84,30 +84,15 @@ func (r repository) GetCommentsByPostId(ctx context.Context, postId primitive.Ob
 		}
 		commentMap[comment.ID] = &commentTree // It's important to store the pointer to the data.
 	}
-
-	//for _, comment := range comments {
-	//	if comment.ParentID != nil {
-	//		// This is a nested reply. Find its parent and add to its replies.
-	//		if _, exists := commentMap[*comment.ParentID]; exists {
-	//			parentTree := commentMap[*comment.ParentID]                             // the parent comment.
-	//			parentTree.Replies = append(parentTree.Replies, commentMap[comment.ID]) // the replies being appended to
-	//			commentMap[*comment.ParentID] = parentTree                              // save back the parent.
-	//		}
-	//	} else {
-	//		// A root or parent comment found! Add to the results.
-	//		//parentComments = append(parentComments, commentMap[comment.ID])
-	//	}
-	//}
-
 	for _, comment := range comments {
 		if comment.ParentID != nil {
 			// This is a nested reply. Find its parent and add to its replies.
 			if parentTree, exists := commentMap[*comment.ParentID]; exists {
-				parentTree.Replies = append(parentTree.Replies, commentMap[comment.ID]) // Dereference
+				parentTree.Replies = append(parentTree.Replies, commentMap[comment.ID])
 			}
 		} else {
 			// A root or parent comment found! Add to the results.
-			rootComments = append(rootComments, commentMap[comment.ID]) // Dereference
+			rootComments = append(rootComments, commentMap[comment.ID])
 		}
 	}
 
