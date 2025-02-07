@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"strings"
 )
 
@@ -17,6 +18,8 @@ type Repository interface {
 	Get(ctx context.Context, id primitive.ObjectID) (entity.User, error)
 	GetByEmail(ctx context.Context, id string) (entity.User, error)
 	Create(ctx context.Context, user entity.User) (*primitive.ObjectID, error)
+	IsUserExistsByEmail(ctx context.Context, email string) (bool, error)
+	IsUserExistsByUsername(ctx context.Context, email string) (bool, error)
 	StartSession() (mongo.Session, error)
 }
 
@@ -57,6 +60,7 @@ func (r repository) GetByEmail(ctx context.Context, email string) (entity.User, 
 func (r repository) Create(ctx context.Context, user entity.User) (*primitive.ObjectID, error) {
 	// save user email to lowercase to avoid extra conversion during lookup
 	user.Email = strings.ToLower(user.Email)
+	user.Username = strings.ToLower(user.Username)
 	result, err := r.collection.InsertOne(ctx, user)
 	if err != nil {
 		return nil, err
@@ -65,4 +69,29 @@ func (r repository) Create(ctx context.Context, user entity.User) (*primitive.Ob
 	fmt.Printf("inserted user data with ID %v\n", result.InsertedID)
 	id := result.InsertedID.(primitive.ObjectID)
 	return &id, err
+}
+
+func (r repository) IsUserExistsByEmail(ctx context.Context, email string) (bool, error) {
+	// Note that emails are saved in lowercase.
+	filter := bson.M{"email": strings.ToLower(email)}
+	opts := options.Count().SetLimit(1)
+	count, err := r.collection.CountDocuments(ctx, filter, opts)
+
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+func (r repository) IsUserExistsByUsername(ctx context.Context, username string) (bool, error) {
+	// Note that emails are saved in lowercase.
+	filter := bson.M{"username": strings.ToLower(username)}
+	opts := options.Count().SetLimit(1)
+	count, err := r.collection.CountDocuments(ctx, filter, opts)
+
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
 }
