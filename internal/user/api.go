@@ -13,7 +13,8 @@ import (
 
 func RegisterHandlers(r *mux.Router, service Service, logger log.Logger) {
 	res := resource{service, logger}
-	r.HandleFunc("/api/v1/users/register", res.registerUserHandler).Methods("POST")
+	r.HandleFunc("/api/v1/auth/login", res.loginHandler).Methods("POST")
+	r.HandleFunc("/api/v1/user/register", res.registerUserHandler).Methods("POST")
 
 }
 
@@ -85,6 +86,50 @@ func (r resource) registerUserHandler(w http.ResponseWriter, req *http.Request) 
 	json.NewEncoder(w).Encode(response)
 }
 
+func (r resource) loginHandler(w http.ResponseWriter, req *http.Request) {
+	var input dto.LoginRequestDto
+
+	err := json.NewDecoder(req.Body).Decode(&input)
+	if err != nil {
+		r.logger.With(req.Context()).Info(err)
+		response := models.NewErrorResponse(
+			[]string{err.Error()},
+			"Login failed. Bad request",
+		)
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	if err := input.Validate(); err != nil {
+		response := models.NewErrorResponse(
+			[]string{err.Error()},
+			"Login failed. Bad request",
+		)
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+	token, err := r.service.Login(req.Context(), input.Email, input.Password)
+	if err != nil {
+		response := models.NewErrorResponse(
+			[]string{err.Error()},
+			"Auth error.",
+		)
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	response := models.NewSuccessResponse(
+		token,
+		"Login successful",
+	)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+	return
+}
+
 func (r resource) getByIdHandler(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	id := vars["id"]
@@ -92,9 +137,4 @@ func (r resource) getByIdHandler(w http.ResponseWriter, req *http.Request) {
 
 	category, _ := r.service.Get(req.Context(), idk)
 	json.NewEncoder(w).Encode(category)
-}
-
-func (r resource) createNewUser(w http.ResponseWriter, req *http.Request) {
-	// check if user already exists
-
 }

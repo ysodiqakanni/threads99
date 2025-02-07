@@ -16,7 +16,7 @@ import (
 // Repository encapsulates the logic to access categories from the data source.
 type Repository interface {
 	Get(ctx context.Context, id primitive.ObjectID) (entity.User, error)
-	GetByEmail(ctx context.Context, id string) (entity.User, error)
+	GetByEmail(ctx context.Context, id string) (*entity.User, error)
 	Create(ctx context.Context, user entity.User) (*primitive.ObjectID, error)
 	IsUserExistsByEmail(ctx context.Context, email string) (bool, error)
 	IsUserExistsByUsername(ctx context.Context, email string) (bool, error)
@@ -45,17 +45,17 @@ func (r repository) Get(ctx context.Context, id primitive.ObjectID) (entity.User
 
 	return user, err
 }
-func (r repository) GetByEmail(ctx context.Context, email string) (entity.User, error) {
+func (r repository) GetByEmail(ctx context.Context, email string) (*entity.User, error) {
 	filter := bson.M{"email": bson.M{"$regex": primitive.Regex{Pattern: "^" + email + "$", Options: "i"}}}
 	var user entity.User
 	err := r.collection.FindOne(ctx, filter).Decode(&user)
 	if err == mongo.ErrNoDocuments {
-		return entity.User{}, nil
+		return nil, nil
 	}
 	// any other error apart from the ErrNoDocuments is something to be worried about.
 
 	//fmt.Println("user data: ", user)
-	return user, err
+	return &user, err
 }
 func (r repository) Create(ctx context.Context, user entity.User) (*primitive.ObjectID, error) {
 	// save user email to lowercase to avoid extra conversion during lookup

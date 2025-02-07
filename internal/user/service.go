@@ -17,6 +17,7 @@ type Service interface {
 	Get(ctx context.Context, id primitive.ObjectID) (*User, error)
 	GetByEmail(ctx context.Context, email string) (User, error)
 	Create(ctx context.Context, req dto.CreateNewUserRequestDto) (*dto.CreateNewUserResponseDto, error)
+	Login(ctx context.Context, username, password string) (string, error)
 	GenerateJWT(identity entity.UserAuthIdentity) (string, error)
 }
 
@@ -49,7 +50,7 @@ func (s service) Get(ctx context.Context, id primitive.ObjectID) (*User, error) 
 func (s service) GetByEmail(ctx context.Context, email string) (User, error) {
 	user, err := s.repo.GetByEmail(ctx, email)
 
-	return User{user}, err
+	return User{*user}, err
 }
 func (s service) Create(ctx context.Context, req dto.CreateNewUserRequestDto) (*dto.CreateNewUserResponseDto, error) {
 	if req.Username == "" {
@@ -99,6 +100,42 @@ func (s service) Create(ctx context.Context, req dto.CreateNewUserRequestDto) (*
 		UserName:     req.Username,
 	}
 	return &ret, nil
+}
+
+func (s service) Login(ctx context.Context, username, password string) (string, error) {
+	if identity := s.authenticate(ctx, username, password); identity != nil {
+		return s.GenerateJWT(identity)
+	}
+	return "", errors.New("Invalid username or password")
+}
+
+// authenticate authenticates a user using username and password.
+// If username and password are correct, an identity is returned. Otherwise, nil is returned.
+func (s service) authenticate(ctx context.Context, email, password string) entity.UserAuthIdentity {
+	logger := s.logger.With(ctx, "user", email)
+
+	// first get user by email
+	// Todo: get by username as well.
+	usr, err := s.repo.GetByEmail(ctx, email)
+	if err != nil || usr == nil {
+		logger.Infof("authentication failed")
+		return nil
+	}
+
+	logger.Infof("user found by email")
+	err = bcrypt.CompareHashAndPassword(usr.HashedPassword, []byte(password))
+	if err != nil {
+		logger.Errorf("authentication failed due to password", err)
+		return nil
+		// Todo: check what kind of error occurred
+		//if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+		//	return 0, ErrInvalidCredentials
+		//} else {
+		//	return 0, err
+		//}
+	}
+	logger.Infof("authentication successful")
+	return usr
 }
 
 func (s service) GenerateJWT(identity entity.UserAuthIdentity) (string, error) {
