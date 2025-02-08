@@ -131,7 +131,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 		cfg.JWTSigningKey)
 
 	user.RegisterHandlers(r,
-		user.NewService(user.NewRepository(db, logger), logger),
+		user.NewService(user.NewRepository(db, logger), logger, cfg.JWTSigningKey, cfg.JWTExpiration),
 		logger)
 
 	//auth.RegisterHandlers(r,
