@@ -12,11 +12,12 @@ type Community struct {
 	AvatarUrl    string             `bson:"avatar_url" bson:"avatar_url"`
 	MembersCount int                `bson:"members_count"`
 	// MembershipType: is it public, restricted, byInvite, etc
-
-	CreatedByUserId primitive.ObjectID `bson:"created_by_user_id" bson:"created_by_user_id" validate:"required"`
-	CreatedAt       time.Time          `json:"created_at"`
-	UpdatedAt       time.Time          `json:"updated_at"`
-	IsDeleted       bool               `json:"is_deleted"`
+	CoverPhotoUrl   string
+	LogoUrl         string
+	CreatedByUserId primitive.ObjectID `json:"CreatedByUserId" bson:"created_by_user_id" validate:"required"`
+	CreatedAt       time.Time          `json:"CreatedAt"`
+	UpdatedAt       time.Time          `json:"UpdatedAt"`
+	IsDeleted       bool               `json:"IsDeleted"`
 }
 
 // a user creates many communities. We're more interested in who created a given community than how many communities a user created

@@ -6,11 +6,12 @@ import (
 )
 
 type CreateNewCommentRequest struct {
-	PostId          string
-	ParentId        string
-	ContentText     string
-	MediaUrls       []string
-	CreatedByUserId string
+	PostId            string
+	ParentId          string
+	ContentText       string
+	MediaUrls         []string
+	CreatedByUserId   string
+	CreatedByUserName string
 }
 
 // Either of the comment text and media is required.

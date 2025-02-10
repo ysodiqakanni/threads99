@@ -23,6 +23,7 @@ type Repository interface {
 	GetCommentsByPostId(ctx context.Context, postId primitive.ObjectID) ([]entity.Comment, error)
 	GetAllRecentPosts(ctx context.Context) ([]dto.TimelinePost, error)
 	GetPostLiteById(ctx context.Context, id primitive.ObjectID) (*dto.PostResponse, error)
+	GetRecentPostsByCommunityId(ctx context.Context, communityId primitive.ObjectID) ([]dto.TimelinePost, error)
 }
 
 // repository persists data in database
@@ -153,7 +154,7 @@ func (r repository) GetAllRecentPosts(ctx context.Context) ([]dto.TimelinePost, 
 	}
 	defer cursor.Close(ctx)
 	// Decode the results into our lightweight struct
-	var posts []dto.TimelinePost
+	posts := []dto.TimelinePost{}
 	if err = cursor.All(ctx, &posts); err != nil {
 		return nil, err
 	}
@@ -179,6 +180,40 @@ func (r repository) GetAllRecentPosts(ctx context.Context) ([]dto.TimelinePost, 
 		return posts, nil
 	*/
 }
+
+func (r repository) GetRecentPostsByCommunityId(ctx context.Context, communityId primitive.ObjectID) ([]dto.TimelinePost, error) {
+	projection := bson.D{
+		{Key: "_id", Value: 1},
+		{Key: "title", Value: 1},
+		{Key: "communityId", Value: 1},
+		{Key: "communityName", Value: 1},
+		{Key: "content.body", Value: 1},
+		{Key: "content.type", Value: 1},
+		{Key: "content.mediaUrls", Value: 1},
+		{Key: "author._id", Value: 1},
+		{Key: "metadata.createdAt", Value: 1},
+	}
+	opts := options.Find().
+		SetSort(bson.D{{Key: "created_at", Value: -1}}).
+		SetProjection(projection).
+		SetLimit(30)
+
+	// Execute the query
+	cursor, err := r.collection.Find(ctx, bson.M{"communityId": communityId}, opts)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+	// Decode the results into our lightweight struct
+	//var posts []dto.TimelinePost
+	posts := []dto.TimelinePost{} // To avoid returning a nil/null slice
+	if err = cursor.All(ctx, &posts); err != nil {
+		return nil, err
+	}
+
+	return posts, nil
+}
+
 func (r repository) UpvotePost(ctx context.Context, postId primitive.ObjectID, voteValue int) error {
 
 	filter := bson.M{
