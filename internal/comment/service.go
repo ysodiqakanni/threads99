@@ -43,7 +43,6 @@ func (s service) CreateNewComment(ctx context.Context, request dto.CreateNewComm
 			return errors.New("Invalid Parent postId"), ""
 		}
 	}
-	username := "testUsername" // Todo: retrieve from the jwt
 
 	// Todo: Question: Should we check if the post and parentComment? exist?
 	comment := entity.Comment{
@@ -55,7 +54,7 @@ func (s service) CreateNewComment(ctx context.Context, request dto.CreateNewComm
 		},
 		Author: entity.Author{
 			ID:       userId,
-			Username: username,
+			Username: request.CreatedByUserName,
 		},
 		Metadata: entity.CommentMetadata{
 			CreatedAt: time.Now(),

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/ysodiqakanni/threads99/internal/auth"
 	"github.com/ysodiqakanni/threads99/internal/models"
 	"github.com/ysodiqakanni/threads99/pkg/log"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -17,14 +18,14 @@ func RegisterHandlers(r *mux.Router, service Service, logger log.Logger, secret 
 	//r.HandleFunc("/api/v1/posts", res.getByIdHandler).Methods("GET")
 	r.HandleFunc("/api/v1/posts/recent", res.GetAllRecentPostsHandler).Methods("GET")
 	r.HandleFunc("/api/v1/posts/{postId}", res.getByIdHandler).Methods("GET")
+	r.HandleFunc("/api/v1/posts/community/{communityId}", res.GetRecentCommunityPostsHandler).Methods("GET")
 
-	//r.HandleFunc("/api/v1/posts/{postId}/comments", res.getCommentsHandler).Methods("GET")
-	r.HandleFunc("/api/v1/posts", res.createNewPostHandler).Methods("POST")
-	//r.HandleFunc("/api/v1/posts/add-comment", res.createCommentHandler).Methods("PUT")
-	r.HandleFunc("/api/v1/posts/upvote-comment", res.voteCommentHandler).Methods("PUT")
-	r.HandleFunc("/api/v1/posts/vote", res.votePostHandler).Methods("PUT")
+	//r.HandleFunc("/api/v1/posts/upvote-comment", res.voteCommentHandler).Methods("PUT")
+	//r.HandleFunc("/api/v1/posts/vote", res.votePostHandler).Methods("PUT")
+
 	// Protected Endpoints
-	//r.Handle("/api/v1/categories", auth.AuthenticateMiddleware(auth.RoleMiddleware(http.HandlerFunc(res.create), "admin"), secret)).Methods("POST")
+	r.Handle("/api/v1/posts", auth.AuthenticateMiddleware(http.HandlerFunc(res.createNewPostHandler),
+		secret)).Methods("POST")
 	r.Use()
 }
 
@@ -73,7 +74,7 @@ func (r resource) createNewPostHandler(w http.ResponseWriter, req *http.Request)
 		r.logger.With(req.Context()).Info(err)
 		response := models.NewErrorResponse(
 			[]string{err.Error()},
-			"Invalid input",
+			"Invalid input", "400",
 		)
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(response)
@@ -86,21 +87,30 @@ func (r resource) createNewPostHandler(w http.ResponseWriter, req *http.Request)
 		r.logger.With(req.Context()).Info(err)
 		response := models.NewErrorResponse(
 			[]string{err.Error()},
-			"Validation failed!",
+			"Validation failed!", "400",
 		)
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(response)
 		return
-		//http.Error(w, err.Error(), http.StatusBadRequest)
-		//return
 	}
+
+	// Extract the userId from context (since the auth middleware already added it).
+	userId, ok := req.Context().Value("userId").(string)
+	username, ok1 := req.Context().Value("username").(string)
+	if !ok || !ok1 {
+		// Handle case where userId is not in context
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	input.CreatedByUserId = userId
+	input.CreatedByUserName = username
 
 	err, postId := r.service.CreatePost(req.Context(), input)
 	if err != nil {
 		r.logger.With(req.Context()).Info(err)
 		response := models.NewErrorResponse(
 			[]string{err.Error()},
-			"An unknown error occurred!",
+			"An unknown error occurred!", "500",
 		)
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(response)
@@ -124,7 +134,30 @@ func (r resource) GetAllRecentPostsHandler(w http.ResponseWriter, req *http.Requ
 	if err != nil {
 		response := models.NewErrorResponse(
 			[]string{err.Error()},
-			"Failed to fetch posts",
+			"Failed to fetch posts", "500",
+		)
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	response := models.NewSuccessResponse(
+		results,
+		"Posts retrieved successfully",
+	)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+func (r resource) GetRecentCommunityPostsHandler(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	id := vars["communityId"]
+	idk, _ := primitive.ObjectIDFromHex(id)
+
+	results, err := r.service.GetRecentPostsByCommunityId(req.Context(), idk)
+	if err != nil {
+		response := models.NewErrorResponse(
+			[]string{err.Error()},
+			"Failed to fetch posts", "500",
 		)
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(response)

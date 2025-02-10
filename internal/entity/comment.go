@@ -16,13 +16,14 @@ type CommentMetadata struct {
 
 // Todo: Do we need to include communityId and Name?
 type Comment struct {
-	ID       primitive.ObjectID  `bson:"_id,omitempty" json:"id"`
-	PostID   primitive.ObjectID  `bson:"postId" json:"postId"`
-	ParentID *primitive.ObjectID `bson:"parentId,omitempty" json:"parentId,omitempty"`
-	Author   Author              `bson:"author" json:"author"`
-	Content  Content             `bson:"content" json:"content"`
-	Metadata CommentMetadata     `bson:"metadata" json:"metadata"`
-	Stats    Stats               `bson:"stats" json:"stats"`
+	ID           primitive.ObjectID  `bson:"_id,omitempty" json:"id"`
+	PostID       primitive.ObjectID  `bson:"postId" json:"postId"`
+	ParentID     *primitive.ObjectID `bson:"parentId,omitempty" json:"parentId,omitempty"`
+	IsPostedByOP bool
+	Author       Author          `bson:"author" json:"author"`
+	Content      Content         `bson:"content" json:"content"`
+	Metadata     CommentMetadata `bson:"metadata" json:"metadata"`
+	Stats        Stats           `bson:"stats" json:"stats"`
 	//Flags struct {
 	//	IsDeleted bool `bson:"isDeleted" json:"isDeleted"`
 	//	IsEdited  bool `bson:"isEdited" json:"isEdited"`

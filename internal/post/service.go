@@ -29,6 +29,7 @@ type Service interface {
 	UpvotePost(ctx context.Context, request PostUpvoteRequest) error
 	GetCommentsByPostId(ctx context.Context, postIdStr string) ([]entity.Comment, error)
 	GetAllRecentPosts(ctx context.Context) ([]dto.TimelinePost, error)
+	GetRecentPostsByCommunityId(ctx context.Context, communityId primitive.ObjectID) ([]dto.TimelinePost, error)
 }
 
 type service struct {
@@ -43,12 +44,13 @@ func NewService(repo Repository, communityRepo community.Repository, logger log.
 }
 
 type CreateNewPostRequest struct {
-	Title           string `json:"title"`
-	Content         string `json:"content"`
-	CreatedByUserId string `json:"created_by_user_id"`
-	CommunityId     string `json:"community_id"`
-	CommunityName   string `json:"CommunityName"`
-	PostType        string `json:"postType"`
+	Title             string `json:"title"`
+	Content           string `json:"content"`
+	CreatedByUserId   string `json:"created_by_user_id"`
+	CreatedByUserName string
+	CommunityId       string `json:"community_id"`
+	CommunityName     string `json:"CommunityName"`
+	PostType          string `json:"postType"`
 }
 
 type AddCommentToPostRequest struct {
@@ -117,7 +119,6 @@ func (s service) GetPostLiteById(ctx context.Context, id primitive.ObjectID) (*d
 
 func (s service) CreatePost(ctx context.Context, request CreateNewPostRequest) (error, string) {
 	userId, err := primitive.ObjectIDFromHex(request.CreatedByUserId)
-	username := "testUsername" // Todo: retrieve from the jwt
 
 	if err != nil {
 		return err, ""
@@ -144,7 +145,7 @@ func (s service) CreatePost(ctx context.Context, request CreateNewPostRequest) (
 		CommunityName:   request.CommunityName,
 		Author: entity.Author{
 			ID:       userId,
-			Username: username,
+			Username: request.CreatedByUserName,
 		},
 		Metadata: entity.Metadata{
 			CreatedAt: time.Now(),
@@ -164,6 +165,14 @@ func (s service) CreatePost(ctx context.Context, request CreateNewPostRequest) (
 
 func (s service) GetAllRecentPosts(ctx context.Context) ([]dto.TimelinePost, error) {
 	posts, err := s.repo.GetAllRecentPosts(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return posts, nil
+}
+func (s service) GetRecentPostsByCommunityId(ctx context.Context, communityId primitive.ObjectID) ([]dto.TimelinePost, error) {
+	posts, err := s.repo.GetRecentPostsByCommunityId(ctx, communityId)
 	if err != nil {
 		return nil, err
 	}

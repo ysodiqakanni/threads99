@@ -30,7 +30,7 @@ func (r resource) registerUserHandler(w http.ResponseWriter, req *http.Request) 
 		r.logger.With(req.Context()).Info(err)
 		response := models.NewErrorResponse(
 			[]string{err.Error()},
-			"Bad data!",
+			"Bad data!", "400",
 		)
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(response)
@@ -40,7 +40,7 @@ func (r resource) registerUserHandler(w http.ResponseWriter, req *http.Request) 
 		r.logger.With(req.Context()).Info(err)
 		response := models.NewErrorResponse(
 			[]string{err.Error()},
-			"Bad Request",
+			"Bad Request", "400",
 		)
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(response)
@@ -52,7 +52,7 @@ func (r resource) registerUserHandler(w http.ResponseWriter, req *http.Request) 
 		r.logger.With(req.Context()).Info(err)
 		response := models.NewErrorResponse(
 			[]string{err.Error()},
-			"User creation failed.",
+			"User creation failed.", "500",
 		)
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(response)
@@ -70,7 +70,7 @@ func (r resource) registerUserHandler(w http.ResponseWriter, req *http.Request) 
 		r.logger.With(req.Context()).Info(err)
 		response := models.NewErrorResponse(
 			[]string{"User created but error logging in. Try to refresh and try again "},
-			"Internal Server error",
+			"Internal Server error", "500",
 		)
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(response)
@@ -94,7 +94,7 @@ func (r resource) loginHandler(w http.ResponseWriter, req *http.Request) {
 		r.logger.With(req.Context()).Info(err)
 		response := models.NewErrorResponse(
 			[]string{err.Error()},
-			"Login failed. Bad request",
+			"Login failed. Bad request", "400",
 		)
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(response)
@@ -104,7 +104,7 @@ func (r resource) loginHandler(w http.ResponseWriter, req *http.Request) {
 	if err := input.Validate(); err != nil {
 		response := models.NewErrorResponse(
 			[]string{err.Error()},
-			"Login failed. Bad request",
+			"Login failed. Bad request", "400",
 		)
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(response)
@@ -115,6 +115,7 @@ func (r resource) loginHandler(w http.ResponseWriter, req *http.Request) {
 		response := models.NewErrorResponse(
 			[]string{err.Error()},
 			"Auth error.",
+			"400",
 		)
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(response)

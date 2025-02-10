@@ -78,6 +78,7 @@ func (r repository) GetCommentsByPostId(ctx context.Context, postId primitive.Ob
 
 	commentMap := make(map[primitive.ObjectID]*dto.CommentTree) // we could just use a list but dict is good for O(1) lookup
 	for _, comment := range comments {
+		//comment.IsPostedByOP = comment.ID == comment.PostID
 		commentTree := dto.CommentTree{
 			Comment: comment,
 			Replies: []*dto.CommentTree{},
