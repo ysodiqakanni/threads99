@@ -16,7 +16,8 @@ type TimelinePost struct {
 		MediaUrls []string `bson:"mediaUrls"`
 	} `bson:"content"`
 	Author struct {
-		ID string `bson:"_id"`
+		ID       string `bson:"_id"`
+		Username string
 	} `bson:"author"`
 	Metadata struct {
 		CreatedAt time.Time `bson:"createdAt"`

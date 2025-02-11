@@ -19,6 +19,7 @@ func RegisterHandlers(r *mux.Router, service Service, logger log.Logger, secret 
 	r.HandleFunc("/api/v1/posts/recent", res.GetAllRecentPostsHandler).Methods("GET")
 	r.HandleFunc("/api/v1/posts/{postId}", res.getByIdHandler).Methods("GET")
 	r.HandleFunc("/api/v1/posts/community/{communityId}", res.GetRecentCommunityPostsHandler).Methods("GET")
+	r.HandleFunc("/api/v1/posts/user/{userId}", res.GetRecentUserPostsHandler).Methods("GET")
 
 	//r.HandleFunc("/api/v1/posts/upvote-comment", res.voteCommentHandler).Methods("PUT")
 	//r.HandleFunc("/api/v1/posts/vote", res.votePostHandler).Methods("PUT")
@@ -154,6 +155,29 @@ func (r resource) GetRecentCommunityPostsHandler(w http.ResponseWriter, req *htt
 	idk, _ := primitive.ObjectIDFromHex(id)
 
 	results, err := r.service.GetRecentPostsByCommunityId(req.Context(), idk)
+	if err != nil {
+		response := models.NewErrorResponse(
+			[]string{err.Error()},
+			"Failed to fetch posts", "500",
+		)
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	response := models.NewSuccessResponse(
+		results,
+		"Posts retrieved successfully",
+	)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+func (r resource) GetRecentUserPostsHandler(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	id := vars["userId"]
+	idk, _ := primitive.ObjectIDFromHex(id)
+
+	results, err := r.service.GetRecentPostsByUserId(req.Context(), idk)
 	if err != nil {
 		response := models.NewErrorResponse(
 			[]string{err.Error()},

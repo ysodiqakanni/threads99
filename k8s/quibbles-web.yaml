@@ -15,7 +15,7 @@ kind: Deployment
 metadata:
   name: quibbles-web
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: quibbles-web
@@ -27,6 +27,7 @@ spec:
       containers:
         - name: quibbles-web
           image: ysodiqakanni/swizzle:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
           env:

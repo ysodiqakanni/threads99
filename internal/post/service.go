@@ -30,6 +30,7 @@ type Service interface {
 	GetCommentsByPostId(ctx context.Context, postIdStr string) ([]entity.Comment, error)
 	GetAllRecentPosts(ctx context.Context) ([]dto.TimelinePost, error)
 	GetRecentPostsByCommunityId(ctx context.Context, communityId primitive.ObjectID) ([]dto.TimelinePost, error)
+	GetRecentPostsByUserId(ctx context.Context, userId primitive.ObjectID) ([]dto.TimelinePost, error)
 }
 
 type service struct {
@@ -74,14 +75,12 @@ func (m CreateNewPostRequest) Validate() error {
 	return validation.ValidateStruct(&m,
 		validation.Field(&m.Title, validation.Required, validation.Length(0, 256)),
 		validation.Field(&m.Content, validation.Required, validation.Length(0, 1024)),
-		validation.Field(&m.CreatedByUserId, validation.Required),
 		validation.Field(&m.CommunityId, validation.Required),
 	)
 }
 func (m AddCommentToPostRequest) Validate() error {
 	return validation.ValidateStruct(&m,
 		validation.Field(&m.CommentContent, validation.Required, validation.Length(0, 1024)),
-		validation.Field(&m.CreatedByUserId, validation.Required),
 		validation.Field(&m.PostId, validation.Required),
 	)
 }
@@ -173,6 +172,14 @@ func (s service) GetAllRecentPosts(ctx context.Context) ([]dto.TimelinePost, err
 }
 func (s service) GetRecentPostsByCommunityId(ctx context.Context, communityId primitive.ObjectID) ([]dto.TimelinePost, error) {
 	posts, err := s.repo.GetRecentPostsByCommunityId(ctx, communityId)
+	if err != nil {
+		return nil, err
+	}
+
+	return posts, nil
+}
+func (s service) GetRecentPostsByUserId(ctx context.Context, userId primitive.ObjectID) ([]dto.TimelinePost, error) {
+	posts, err := s.repo.GetRecentPostsByUserId(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
