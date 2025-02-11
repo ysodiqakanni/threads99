@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: quibble-api
+  name: quibbles-api
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: quibbles-api
@@ -15,5 +15,6 @@ spec:
       containers:
       - name: quibbles-api
         image: ysodiqakanni/swizzle-api:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8090

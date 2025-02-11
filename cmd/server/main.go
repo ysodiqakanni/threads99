@@ -114,6 +114,7 @@ func SetupMongoDB(connStr, dbName string) (*mongo.Database, error) {
 func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.Handler {
 	r := mux.NewRouter()
 	r.HandleFunc("/api/healthcheck", HealthCheckHandler).Methods("GET")
+	r.HandleFunc("/api/version", VersionHandler).Methods("GET")
 
 	post.RegisterHandlers(r,
 		post.NewService(post.NewRepository(db, logger), community.NewRepository(db, logger), logger),
@@ -142,4 +143,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 }
 func HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Everything is dope from this side :)")
+}
+func VersionHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "v1.4.0")
 }

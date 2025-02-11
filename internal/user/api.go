@@ -5,6 +5,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/ysodiqakanni/threads99/internal/dto"
 	"github.com/ysodiqakanni/threads99/internal/entity"
+	"github.com/ysodiqakanni/threads99/internal/helper"
 	"github.com/ysodiqakanni/threads99/internal/models"
 	"github.com/ysodiqakanni/threads99/pkg/log"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -15,7 +16,7 @@ func RegisterHandlers(r *mux.Router, service Service, logger log.Logger) {
 	res := resource{service, logger}
 	r.HandleFunc("/api/v1/auth/login", res.loginHandler).Methods("POST")
 	r.HandleFunc("/api/v1/user/register", res.registerUserHandler).Methods("POST")
-
+	r.HandleFunc("/api/v1/user/profile/{userId}", res.getUserPublicMetadata).Methods("GET")
 }
 
 type resource struct {
@@ -138,4 +139,13 @@ func (r resource) getByIdHandler(w http.ResponseWriter, req *http.Request) {
 
 	category, _ := r.service.Get(req.Context(), idk)
 	json.NewEncoder(w).Encode(category)
+}
+func (r resource) getUserPublicMetadata(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	id := vars["userId"]
+	idk, _ := primitive.ObjectIDFromHex(id)
+
+	user, _ := r.service.GetUserProfileData(req.Context(), idk)
+
+	helper.EncodeSuccessResponse(w, user, "User data retrieved.")
 }
