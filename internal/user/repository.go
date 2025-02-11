@@ -16,6 +16,7 @@ import (
 // Repository encapsulates the logic to access categories from the data source.
 type Repository interface {
 	Get(ctx context.Context, id primitive.ObjectID) (entity.User, error)
+	GetUserById(ctx context.Context, id primitive.ObjectID) (*entity.User, error)
 	GetByEmail(ctx context.Context, id string) (*entity.User, error)
 	Create(ctx context.Context, user entity.User) (*primitive.ObjectID, error)
 	IsUserExistsByEmail(ctx context.Context, email string) (bool, error)
@@ -41,6 +42,13 @@ func (r repository) StartSession() (mongo.Session, error) {
 func (r repository) Get(ctx context.Context, id primitive.ObjectID) (entity.User, error) {
 	filter := bson.M{"_id": id}
 	var user entity.User
+	err := r.collection.FindOne(ctx, filter).Decode(&user)
+
+	return user, err
+}
+func (r repository) GetUserById(ctx context.Context, id primitive.ObjectID) (*entity.User, error) {
+	filter := bson.M{"_id": id}
+	var user *entity.User
 	err := r.collection.FindOne(ctx, filter).Decode(&user)
 
 	return user, err

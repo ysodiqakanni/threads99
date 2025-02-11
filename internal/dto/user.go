@@ -4,6 +4,7 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"time"
 )
 
 type CreateNewUserRequestDto struct {
@@ -22,6 +23,21 @@ type CreateNewUserResponseDto struct {
 	UserObjectId primitive.ObjectID
 	UserId       string
 	UserName     string
+}
+type UserPublicProfileResponseDto struct {
+	ID        primitive.ObjectID
+	FirstName string
+	LastName  string
+
+	Email    string
+	Username string
+
+	Bio           string
+	CoverPhotoUrl string
+	LogoUrl       string
+	PostsCount    int
+	CommentsCount int
+	CreatedAt     time.Time
 }
 
 // Validate validates the CreateAlbumRequest fields.

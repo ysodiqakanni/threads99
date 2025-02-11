@@ -16,6 +16,7 @@ import (
 type Service interface {
 	Get(ctx context.Context, id primitive.ObjectID) (*User, error)
 	GetByEmail(ctx context.Context, email string) (User, error)
+	GetUserProfileData(ctx context.Context, id primitive.ObjectID) (*dto.UserPublicProfileResponseDto, error)
 	Create(ctx context.Context, req dto.CreateNewUserRequestDto) (*dto.CreateNewUserResponseDto, error)
 	Login(ctx context.Context, username, password string) (string, error)
 	GenerateJWT(identity entity.UserAuthIdentity) (string, error)
@@ -45,6 +46,26 @@ func (s service) Get(ctx context.Context, id primitive.ObjectID) (*User, error) 
 		return nil, err
 	}
 	return &User{user}, nil
+}
+func (s service) GetUserProfileData(ctx context.Context, id primitive.ObjectID) (*dto.UserPublicProfileResponseDto, error) {
+	user, err := s.repo.GetUserById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	resp := dto.UserPublicProfileResponseDto{
+		ID:            user.ID,
+		Username:      user.Username,
+		Email:         user.Email,
+		FirstName:     user.FirstName,
+		LastName:      user.LastName,
+		Bio:           user.Bio,
+		CoverPhotoUrl: user.CoverPhotoUrl,
+		LogoUrl:       user.LogoUrl,
+		CommentsCount: user.CommentsCount,
+		PostsCount:    user.PostsCount,
+		CreatedAt:     user.CreatedAt,
+	}
+	return &resp, nil
 }
 
 func (s service) GetByEmail(ctx context.Context, email string) (User, error) {

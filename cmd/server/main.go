@@ -145,5 +145,5 @@ func HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Everything is dope from this side :)")
 }
 func VersionHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "v1.3.0")
+	fmt.Fprintln(w, "v1.4.0")
 }
