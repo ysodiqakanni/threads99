@@ -29,52 +29,32 @@ func (r resource) registerUserHandler(w http.ResponseWriter, req *http.Request) 
 	err := json.NewDecoder(req.Body).Decode(&input)
 	if err != nil {
 		r.logger.With(req.Context()).Info(err)
-		response := models.NewErrorResponse(
-			[]string{err.Error()},
-			"Bad data!", "400",
-		)
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+		helper.EncodeErrorResponse(w, err, err.Error(), "400")
 		return
 	}
 	if err := input.Validate(); err != nil {
 		r.logger.With(req.Context()).Info(err)
-		response := models.NewErrorResponse(
-			[]string{err.Error()},
-			"Bad Request", "400",
-		)
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+		helper.EncodeErrorResponse(w, err, err.Error(), "400")
 		return
 	}
 
 	userObj, err := r.service.Create(req.Context(), input)
 	if err != nil {
 		r.logger.With(req.Context()).Info(err)
-		response := models.NewErrorResponse(
-			[]string{err.Error()},
-			"User creation failed.", "500",
-		)
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+		helper.EncodeErrorResponse(w, err, err.Error(), "500")
 		return
 	}
 
 	userIdentity := entity.User{
 		Email:    input.Email,
 		ID:       userObj.UserObjectId,
-		Username: input.Email,
+		Username: userObj.UserName,
 	}
 
 	token, err := r.service.GenerateJWT(userIdentity)
 	if err != nil {
 		r.logger.With(req.Context()).Info(err)
-		response := models.NewErrorResponse(
-			[]string{"User created but error logging in. Try to refresh and try again "},
-			"Internal Server error", "500",
-		)
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+		helper.EncodeErrorResponse(w, err, "User created but error logging in. Try to refresh and try again", "500")
 		return
 	}
 
@@ -93,42 +73,21 @@ func (r resource) loginHandler(w http.ResponseWriter, req *http.Request) {
 	err := json.NewDecoder(req.Body).Decode(&input)
 	if err != nil {
 		r.logger.With(req.Context()).Info(err)
-		response := models.NewErrorResponse(
-			[]string{err.Error()},
-			"Login failed. Bad request", "400",
-		)
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+		helper.EncodeErrorResponse(w, err, "Invalid Username or password", "400")
 		return
 	}
 
 	if err := input.Validate(); err != nil {
-		response := models.NewErrorResponse(
-			[]string{err.Error()},
-			"Login failed. Bad request", "400",
-		)
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+		helper.EncodeErrorResponse(w, err, "Login failed, bad data!", "400")
 		return
 	}
 	token, err := r.service.Login(req.Context(), input.Email, input.Password)
 	if err != nil {
-		response := models.NewErrorResponse(
-			[]string{err.Error()},
-			"Auth error.",
-			"400",
-		)
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+		helper.EncodeErrorResponse(w, err, "Invalid Username or password", "400")
 		return
 	}
 
-	response := models.NewSuccessResponse(
-		token,
-		"Login successful",
-	)
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	helper.EncodeSuccessResponse(w, token, "Login successful")
 	return
 }
 

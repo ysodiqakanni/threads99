@@ -6,6 +6,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/ysodiqakanni/threads99/internal/dto"
 	"github.com/ysodiqakanni/threads99/internal/entity"
+	"github.com/ysodiqakanni/threads99/internal/helper"
 	"github.com/ysodiqakanni/threads99/pkg/log"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
@@ -75,7 +76,7 @@ func (s service) GetByEmail(ctx context.Context, email string) (User, error) {
 }
 func (s service) Create(ctx context.Context, req dto.CreateNewUserRequestDto) (*dto.CreateNewUserResponseDto, error) {
 	if req.Username == "" {
-		req.Username = req.Email
+		req.Username = helper.GenerateUsernameFromEmail(req.Email)
 	}
 	userExists, err := s.repo.IsUserExistsByEmail(ctx, req.Email)
 	if err != nil {
@@ -112,6 +113,7 @@ func (s service) Create(ctx context.Context, req dto.CreateNewUserRequestDto) (*
 		UpdatedAt:      now,
 	})
 	if err != nil {
+		// Todo: must log error.
 		return nil, err
 	}
 
@@ -167,4 +169,8 @@ func (s service) GenerateJWT(identity entity.UserAuthIdentity) (string, error) {
 		"role":     identity.GetRole(),
 		"exp":      time.Now().Add(time.Duration(s.tokenExpiration) * time.Hour).Unix(),
 	}).SignedString([]byte(s.signingKey))
+}
+
+func generateUsername(email string) {
+
 }

@@ -43,8 +43,9 @@ type UserPublicProfileResponseDto struct {
 // Validate validates the CreateAlbumRequest fields.
 func (m CreateNewUserRequestDto) Validate() error {
 	return validation.ValidateStruct(&m,
-		validation.Field(&m.Email, validation.Required, is.Email, validation.Length(6, 200)),
-		validation.Field(&m.Password, validation.Required, validation.Length(6, 100)),
+		validation.Field(&m.Email, validation.Required, is.Email, validation.Length(6, 50)),
+		validation.Field(&m.Password, validation.Required, validation.Length(6, 20)),
+		validation.Field(&m.Username, validation.Length(3, 12)),
 
 		//validation.Field(&a.Zip, validation.Required, validation.Match(regexp.MustCompile("^[0-9]{5}$"))),
 	)

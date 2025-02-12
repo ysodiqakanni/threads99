@@ -85,17 +85,8 @@ func (r resource) createCommunityHandler(w http.ResponseWriter, req *http.Reques
 func (r resource) GetAllCommunitiesHandler(w http.ResponseWriter, req *http.Request) {
 	results, err := r.service.GetAllCommunities(req.Context())
 	if err != nil {
-		response := models.NewErrorResponse(
-			[]string{err.Error()},
-			"Failed to fetch communities",
-			"500",
-		)
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+		helper.EncodeApiFailureResponse(w, err, "Failed to fetch communities", "500")
 		return
-
-		//http.Error(w, err.Error(), http.StatusInternalServerError)
-		//return
 	}
 
 	response := models.NewSuccessResponse(
